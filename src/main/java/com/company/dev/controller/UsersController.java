@@ -2,12 +2,17 @@ package com.company.dev.controller;
 
 import com.company.dev.model.Users;
 import com.company.dev.model.UsersDao;
+import com.company.dev.util.Util;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.security.SecureRandom;
 
 @Controller
 public class UsersController {
@@ -21,6 +26,46 @@ public class UsersController {
     // ------------------------
     // PUBLIC METHODS
     // ------------------------
+
+    @RequestMapping(method=RequestMethod.GET, value = "/resetpassword")
+    public String resetPassword(Model model) {
+        return "resetpassword";
+    }
+
+    @RequestMapping(method=RequestMethod.POST, value = "/login")
+    public String resetPasswordPost(String username, String password, Model model) {
+
+
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/login")
+    public String login(Model model) {
+        return "login";
+    }
+
+    @RequestMapping(method=RequestMethod.POST, value = "/login")
+    public String loginPost(String username, String password, Model model) {
+
+        try {
+            System.out.println("username: "+username+", password: "+password);
+            Users user = usersDao.findByUsername(username);
+            String hashedPassword = Util.getHashedPassword(password, user.getSalt());
+
+            if ( !hashedPassword.equals(user.getPassword())) {
+                System.out.println("invalid login");
+                return "redirect:/login";
+            }
+        } catch (Exception ex) {
+            SecureRandom random = new SecureRandom();
+            byte slt[] = new byte[8];
+            random.nextBytes(slt);
+            Util.getHashedPassword(password, Base64.encodeBase64String(slt));
+
+            System.out.println("User not found");
+            return "redirect:/login";
+        }
+        return "viewproducts";
+    }
 
     /**
      * /create  --> Create a new user and save it in the database.

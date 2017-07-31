@@ -4,6 +4,11 @@ import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.security.SecureRandom;
+
+import com.company.dev.util.Util;
+import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.crypto.generators.SCrypt;
 
 @Entity
 public class Users {
@@ -19,9 +24,16 @@ public class Users {
 
     public Users(String username, String password) {
         this.username = username;
-        this.password = password;
-        this.salt = "SHLD_BE_RANDOM";
+
+        SecureRandom random = new SecureRandom();
+        byte salt[] = new byte[8];
+        random.nextBytes(salt);
+
+        this.password = Util.getHashedPassword(password,Base64.encodeBase64String(salt));
+        this.salt = Base64.encodeBase64String(salt);
     }
+
+
 
     @Id
     @Column(name = "username", nullable = false, length = 30)
