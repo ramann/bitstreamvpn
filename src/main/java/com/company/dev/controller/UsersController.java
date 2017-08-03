@@ -32,20 +32,26 @@ public class UsersController {
         return "resetpassword";
     }
 
-    @RequestMapping(method=RequestMethod.POST, value = "/login")
-    public String resetPasswordPost(String username, String password, Model model) {
+    @RequestMapping(method=RequestMethod.POST, value="/resetpassword")
+    public String resetPassword(String password1, String password2, Model model) {
+        return "fix me";
+    }
 
-
+    @RequestMapping(method=RequestMethod.GET, value = "/viewproducts")
+    public String viewProducts(Model model) {
+        System.out.println("GET /viewproducts");
+        return "viewproducts";
     }
 
     @RequestMapping(method=RequestMethod.GET, value = "/login")
     public String login(Model model) {
+        System.out.println("GET /login");
         return "login";
     }
 
     @RequestMapping(method=RequestMethod.POST, value = "/login")
     public String loginPost(String username, String password, Model model) {
-
+        System.out.println("POST /login");
         try {
             System.out.println("username: "+username+", password: "+password);
             Users user = usersDao.findByUsername(username);

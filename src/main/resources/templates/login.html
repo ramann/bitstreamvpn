@@ -5,12 +5,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
-Please login:
+Custom Please login:
 <form action="login" method="post">
-    <label for="username">username:</label>
+    <label for="username">Custom username:</label>
     <input type="text" id="username" name="username"/><br/>
-    <label for="password">password:</label>
+    <label for="password">Custom password:</label>
     <input type="password" id="password" name="password"/><br/>
+    <input type="hidden"  name="${_csrf.parameterName}"   value="${_csrf.token}"/>
     <input type="submit"/>
 </form>
 </body>
