@@ -17,6 +17,15 @@ import java.security.SecureRandom;
 @Controller
 public class UsersController {
 
+    @RequestMapping(method=RequestMethod.GET, value = "/header")
+    public String header(Model model) {
+        return "header";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/footer")
+    public String footer(Model model) {
+        return "footer";
+    }
 
     @RequestMapping("/greeting")
     public String greeting(@RequestParam(value="name", required=false, defaultValue="World") String name, Model model) {

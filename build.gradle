@@ -38,4 +38,7 @@ dependencies {
     compile("commons-codec:commons-codec")
     compile("org.bouncycastle:bcprov-jdk15on:1.57")
     compile group: 'org.postgresql', name: 'postgresql', version:'42.1.1'
-    compile("org.springframework.boot:spring-boot-starter-security")}
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.thymeleaf.extras:thymeleaf-extras-springsecurity4")
+    compile("org.thymeleaf.extras:thymeleaf-extras-java8time")
+}
