@@ -3,7 +3,10 @@ package com.company.dev.controller;
 import com.company.dev.model.Users;
 import com.company.dev.model.UsersDao;
 import com.company.dev.util.Util;
+import com.github.cage.Cage;
+import com.github.cage.YCage;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.tomcat.jni.Time;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,10 +15,80 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 
 @Controller
 public class UsersController {
+
+    /**
+     * Generates captcha as image and returns the image path
+     * stores the captcha code in the http session
+     * and deletes older, unused captcha images.
+     */
+    @RequestMapping(value = "/generatecaptcha", method = RequestMethod.GET)
+    public String generateCaptcha(Model model) { //ResponseEntity<CaptchaRequestData> generateCaptcha(HttpSession session) {
+        //String captchaImageUploadDirectory = "/tmp/"; //= environment.getProperty("captcha_image_folder");
+        String captchaWebAlias; // = environment.getProperty("captcha_web_alias");
+        File tmpfile = null;
+        try {
+            tmpfile = File.createTempFile("temp", ".jpg");
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+      //  String fileName = "temp" + "." + "jpg";
+      //  String fullFilename = captchaImageUploadDirectory + fileName;
+
+        //Generating the captcha code and setting max length to 4 symbols
+        Cage currGcage = new YCage();
+        String captchaToken = currGcage.getTokenGenerator().next();
+
+        if (captchaToken.length() > 4) {
+            captchaToken = captchaToken.substring(0, 4).toUpperCase();
+        }
+
+        //Setting the captcha token in http session
+        //session.setAttribute("captchaToken", captchaToken);
+
+        try {
+            OutputStream os = new FileOutputStream(tmpfile, false);
+            currGcage.draw(captchaToken, os);
+            os.flush();
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //CaptchaRequestData data = new CaptchaRequestData(captchaWebAlias + fileName);
+        model.addAttribute("filename", tmpfile);
+        return "generatecaptcha";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/")
+    public String index(String filename, Model model) {
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(filename)));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return "index";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/task")
+    public String task(Model model) {
+        return "task";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/layout")
+    public String layout(Model model) {
+        return "layout";
+    }
 
     @RequestMapping(method=RequestMethod.GET, value = "/header")
     public String header(Model model) {

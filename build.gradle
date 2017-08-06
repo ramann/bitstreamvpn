@@ -41,4 +41,5 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-security")
     compile("org.thymeleaf.extras:thymeleaf-extras-springsecurity4")
     compile("org.thymeleaf.extras:thymeleaf-extras-java8time")
+    compile("com.github.cage:cage:1.0")
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
+    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
+</head>
+
+<body>
+<!--/* Standard layout can be mixed with Layout Dialect */-->
+<div th:replace="header :: header" th:fragment="header">
+</div>
+<!--/* The value passed from calling template will be inserted in this element */-->
+<div class="container" th:fragment="content(value)" th:insert="${value}">
+    <!-- ============================================================================ -->
+    <!-- This content is only used for static prototyping purposes (natural templates)-->
+    <!-- and is therefore entirely optional. -->
+    <!-- ============================================================================ -->
+    <h1>Static content for prototyping purposes only</h1>
+    <p>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Praesent scelerisque neque neque, ac elementum quam dignissim interdum.
+        Phasellus et placerat elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Praesent scelerisque neque neque, ac elementum quam dignissim interdum.
+        Phasellus et placerat elit.
+    </p>
+</div>
+<!--/* Footer fragment */-->
+<footer th:replace="footer :: footer" class="text-center">&copy; 2017 Default Footer</footer>
+</body>
+</html>
