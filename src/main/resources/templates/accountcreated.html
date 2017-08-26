@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
+    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
+</head>
+<body>
+<header th:replace="layout :: header">
+</header>
+
+<div th:fragment="content">
+    <div th:if="${username == null}">
+        <div>What are you doing here?</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi,' + ${username} + ', your account has been created!'">Hi, username</div>
+    </div>
+
+</div>
+
+</body>
+</html>

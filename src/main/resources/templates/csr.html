@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
+    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
+</head>
+<body>
+<header th:replace="layout :: header">
+</header>
+
+<div th:fragment="content">
+    <div th:if="${username == null}">
+        <div>What are you doing here?</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi,' + ${username} + ', Welcome to MyAccount!'">Hi, username</div>
+
+    </div>
+
+    <table th:classappend="table">
+        <tr>
+            <th>ID</th>
+            <th>Date Initiated</th>
+            <th>CSR</th>
+            <th>Certificate</th>
+            <th>Revoke?</th>
+        </tr>
+        <tr th:each="certificate : ${certificates}">
+            <td th:text="${certificate.id}"></td>
+            <td th:text="${certificate.dateInitiated}"></td>
+            <td><pre th:text="${certificate.csrText}"></pre></td>
+            <td><pre th:text="${certificate.certText}">certificate text</pre></td>
+            <td th:if="${certificate.revoked}">REVOKED!</td>
+            <td th:unless="${certificate.revoked}"><a th:href="'/revoke?serial='+${certificate.serial}">revoke</a></td>
+        </tr>
+    </table>
+
+    <form name="f" th:action="@{/csr}" method="post">
+        <fieldset>
+            <!--<legend>Select Product</legend>-->
+            <label>Select a product:</label>
+            <input type="radio" id="week" name="product">1 WEEK</input>
+            <input type="radio" id="month" name="product">1 MONTH</input>
+            <p th:if="${product_error} != null" th:text="${product_error}"></p><br/>
+
+            <label for="csr">csr</label>
+            <textarea id="csr" name="csr" cols="70" rows="20"/>
+            <p th:if="${csr_error} != null" th:text="${csr_error}"></p><br/>
+
+            <input type="hidden" name="purchaseId" value="2"></input>
+        </fieldset>
+        <div class="form-actions">
+            <button type="submit" class="btn">Next: Payment info</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

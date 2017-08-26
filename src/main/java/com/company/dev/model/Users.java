@@ -4,6 +4,7 @@ import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.validation.constraints.Size;
 import java.security.SecureRandom;
 
 import com.company.dev.util.Util;
@@ -34,9 +35,18 @@ public class Users {
     }
 
 
+    @Override
+    public String toString() {
+        return "Users{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", salt='" + salt + '\'' +
+                '}';
+    }
 
     @Id
     @Column(name = "username", nullable = false, length = 30)
+    @Size(min=3)
     public String getUsername() {
         return username;
     }

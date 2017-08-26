@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
+    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
+</head>
+<body>
+<header th:replace="layout :: header">
+</header>
+
+<div th:fragment="content">
+    <div th:if="${username == null}">
+        <div>What are you doing here?</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi,' + ${username} + ', Welcome to MyAccount!'">Hi, username</div>
+        <a href="#" th:href="@{/enterpayment}">Enter payment</a>
+    </div>
+    <br/><br/><br/><br/>
+    <div>
+        <p>Payment History</p>
+        <table th:classappend="table">
+            <tr>
+                <th>ID</th>
+                <th>Date Initiated</th>
+                <th>Amount</th>
+                <th>Receiving address</th>
+                <th>Date 1 Confirm</th>
+                <th>Cert</th>
+            </tr>
+            <tr th:each="purchase : ${purchases}">
+                <td th:text="${purchase.id}"></td>
+                <td th:text="${purchase.dateInitiated}"></td>
+                <td th:text="${purchase.amount}"></td>
+                <td th:text="${purchase.receivingAddress}"></td>
+                <td th:text="${purchase.dateConfirm1}"></td>
+                <td><a th:href="'/csr?purchaseId=' + ${purchase.id}">cert</a></td>
+            </tr>
+        </table>
+    </div>
+
+
+</div>
+
+</body>
+</html>

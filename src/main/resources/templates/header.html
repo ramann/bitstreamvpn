@@ -16,13 +16,16 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li th:classappend="${module == 'home' ? 'active' : ''}">
+                <li th:if="${#authorization.expression('!isAuthenticated()')}" th:classappend="${page == 'createaccount' ? 'active' : ''}">
                     <a href="#" th:href="@{/createaccount}">Create account</a>
                 </li>
-                <li th:classappend="${module == 'tasks' ? 'active' : ''}">
+                <li th:if="${#authorization.expression('isAuthenticated()')}" th:classappend="${page == 'myaccount' ? 'active' : ''}">
+                    <a href="#" th:href="@{/myaccount}">My account</a>
+                </li>
+                <li th:classappend="${page == 'howitworks' ? 'active' : ''}">
                     <a href="#" th:href="@{/howitworks}">How it works</a>
                 </li>
-                <li th:classappend="${module == 'tasks-ld' ? 'active' : ''}">
+                <li th:if="${#authorization.expression('isAuthenticated()')}" th:classappend="${page == 'contact' ? 'active' : ''}">
                     <a href="#" th:href="@{/contact}">Contact</a>
                 </li>
             </ul>
@@ -33,9 +36,9 @@
                     </a>
                 </li>
                 <li th:if="${#authorization.expression('isAuthenticated()')}">
-                    <a href="/logout" th:href="@{/logout}">
-                        <span class="glyphicon glyphicon-log-out" aria-hidden="true"></span>&nbsp;Logout
-                    </a>
+                    <form th:action="@{/logout}" method="post">
+                        <input class="btn" type="submit" value="Log out" />
+                    </form>
                 </li>
             </ul>
         </div>
