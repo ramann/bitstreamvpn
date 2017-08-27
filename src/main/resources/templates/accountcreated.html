@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
-    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
-</head>
+<head th:replace="layout :: head"></head>
 <body>
 <header th:replace="layout :: header">
 </header>
 
-<div th:fragment="content">
+<div class="container" th:fragment="content">
     <div th:if="${username == null}">
-        <div>What are you doing here?</div>
+        <h1>What are you doing here?</h1>
     </div>
     <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + ', your account has been created!'">Hi, username</div>
+        <h1 th:text=" 'Hey ' + ${username} + ', your account has been created! Now go sign in!'"></h1>
     </div>
 
 </div>

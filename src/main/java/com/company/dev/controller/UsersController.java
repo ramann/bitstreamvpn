@@ -9,16 +9,19 @@ import com.github.cage.GCage;
 import com.github.cage.YCage;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tomcat.jni.Time;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionConfidence;
+import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.wallet.Wallet;
@@ -78,10 +81,8 @@ import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
 import org.bouncycastle.asn1.x509.*;
 
 import static com.company.dev.util.Util.*;
@@ -92,11 +93,24 @@ import static java.lang.System.out;
 public class UsersController {
 
     @RequestMapping(method=RequestMethod.GET, value="/revoke")
-    public String revokeCert(Model model, Principal principal, String serial) {
+    public String revokeCert(Model model, Principal principal, String serial, boolean authError) {
+        System.out.println("authError: "+authError);
+        if(authError) {
+            model.addAttribute("password_error", "Your password was wrong. Try again.");
+        }
         model.addAttribute("username", principal.getName());
         long certSerial = Long.valueOf(serial);
         Certificate certificate = certificateDao.findBySerial(certSerial);
-        certificate.setCertText(prettyPrintCert(certificate.getCertText()));
+        //certificate.setCertText(prettyPrintCert(certificate.getCertText()));
+        X509CertificateHolder cert = null;
+        try {
+            PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(certificate.getCertText())));
+            PemObject pemObjectCert = pemReaderCert.readPemObject();
+            cert = new X509CertificateHolder(pemObjectCert.getContent());
+        } catch (Exception e) {
+            System.out.println("exception ");
+        }
+        model.addAttribute("certInfo", printBasicCertInfo(cert));
         model.addAttribute("certificate", certificate);
         return "revoke";
 
@@ -114,7 +128,9 @@ public class UsersController {
 
             if ( !hashedPassword.equals(user.getPassword())) {
                 System.out.println("invalid login");
-                return null;
+                //model.addAttribute("password_error", "Your password was wrong. Try again.");
+                //model.addAttribute("serial", serial);
+                return "redirect:/revoke?serial="+serial+"&authError=true";
             } else {
                 System.out.println("password was good");
             }
@@ -165,24 +181,17 @@ public class UsersController {
         return "revoked";
     }
 
-    @RequestMapping(method=RequestMethod.GET, value="/csr")
+    @RequestMapping(method=RequestMethod.GET, value="/certs")
     public String csr(Model model, Principal principal, String purchaseId) {
-        model.addAttribute("username", principal.getName());
 
         int purchaseInt = Integer.valueOf(purchaseId);
         Purchase purchase = purchaseDao.findById(purchaseInt);
-        System.out.println("purchase.getAmount: "+purchase.getAmount());
 
         List<Certificate> certificates = certificateDao.findByPurchase(purchase);
         for(Certificate c:certificates) {
-        //    c.setCertText(prettyPrintCert(c.getCertText()));
-        //    c.setCsrText(prettyPrintCsr(c.getCsrText()));
-
-
             try {
                 PemReader pemReaderCsr = new PemReader(new StringReader(prettyPrintCsr(c.getCsrText())));
                 PemObject pemObjectCsr = pemReaderCsr.readPemObject();
-                System.out.println("pemObject created");
                 PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObjectCsr.getContent());
                 System.out.println("cert req: "+pkcs10CertificationRequest.getSubject());
                 c.setCsrText(pkcs10CertificationRequest.getSubject().toString());
@@ -193,16 +202,19 @@ public class UsersController {
                 c.setCertText("serial: "+cert.getSerialNumber()+"\n"+
                         "subject: "+ cert.getSubject().toString()+"\n"+
                         "expires on "+dateToGMT(cert.getNotAfter())); // TODO display time in GMT
-
+                System.out.println("c:"+c.getCertText());
             } catch (Exception e) {
 
             }
         }
         model.addAttribute("certificates", certificates);
-        return "csr";
+        model.addAttribute("certificatesSize", certificates.size());
+        model.addAttribute("purchaseId", purchaseId);
+        model.addAttribute("username", principal.getName());
+        return "certs";
     }
 
-    @RequestMapping(method=RequestMethod.POST, value="/csr")
+    @RequestMapping(method=RequestMethod.POST, value="/certs")
     public String postCSR(Model model, Principal principal, String csr, String purchaseId) {
         model.addAttribute("username", principal.getName());
         out.println("das CSR: "+csr);
@@ -292,21 +304,37 @@ public class UsersController {
             return "Arghh!";
         }
 
-        return "csr";
+        return "redirect:/certs?purchaseId="+purchaseId;
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/myaccount")
     public String myAccount(Model model, Principal principal)
     {
-        out.println("principal.getName:"+principal.getName());
+        System.out.println("principal.getName:"+principal.getName());
+        Purchase savedPendingPurchase = null;
+        List<Purchase> confirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNotNull(usersDao.findByUsername(principal.getName()));
+        System.out.println("confirmedPurchases: "+confirmedPurchases.size());
+        List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
+        System.out.println("unconfirmedPurchases: "+unconfirmedPurchases.size());
 
-        List<Purchase> purchases = purchaseDao.findByUsers(usersDao.findByUsername(principal.getName()));
-
-        for (Purchase p:purchases) {
-            out.println("purchase ids: "+p.getId());
+        if(unconfirmedPurchases.isEmpty()) {
+            Address address = MyBean.kit.wallet().freshReceiveAddress();
+            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
+            savedPendingPurchase = purchaseDao.save(newPendingPurchase);
+        } else {
+            savedPendingPurchase = unconfirmedPurchases.get(0);
+            if(unconfirmedPurchases.size() > 1) {
+                System.out.println("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
+            }
         }
 
-        model.addAttribute("purchases", purchases);
+        for (Purchase p:confirmedPurchases) {
+            System.out.println("confirmed purchases: "+p);
+        }
+
+        model.addAttribute("confirmedPurchases", confirmedPurchases);
+        model.addAttribute("confirmedPurchasesSize", confirmedPurchases.size());
+        model.addAttribute("pendingPurchase", savedPendingPurchase==null ? null : savedPendingPurchase.getReceivingAddress());
         model.addAttribute("username", principal.getName());
         model.addAttribute("page", "myaccount");
         return "myaccount";
@@ -365,21 +393,21 @@ public class UsersController {
     @RequestMapping(method=RequestMethod.POST, value="/createaccount")
     public String accountSetup(@Pattern(regexp="^[a-zA-Z0-9]{3,10}$", message="Username must be 3 to 10 alphanumeric characters")
                                                 String username,
-                                    @Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
-                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")
+                                    /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
+                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
                                             String password,
-                                    @Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
-                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")
+                                    /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
+                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
                                                 String confirmPassword,
                                     /*@Pattern(regexp="^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$", message="You must enter a Bitcoin address")
                                                 String btc,*/
-                                    @Size(min=7, max=7, message="CAPTCHA value is wrong.") String captcha,
+                                    /*@Size(min=7, max=7, message="CAPTCHA value is wrong.")*/ String captcha,
                                     Model model, HttpSession session) //String confirm_password, String btc, Model model,HttpSession session,
     {
         // We do this validation here because the annotations above won't catch these.
         boolean errors = false;
         if( !captcha.equals(session.getAttribute("captchaToken"))) {
-            model.addAttribute("captcha_error", "CAPTCHA value is wrong.");
+            model.addAttribute("captcha_error", "It looks like you've entered the wrong CAPTCHA value, here's a different one to try.");
             errors = true;
         }
         if( !password.equals(confirmPassword)) {
@@ -389,6 +417,8 @@ public class UsersController {
         if (usersDao.findByUsername(username) != null) {
             model.addAttribute("username_exists_error", "Username has already been taken");
             errors = true;
+        } else {
+            model.addAttribute("username", username);
         }
         if(errors) {
             return "createaccount";
@@ -417,28 +447,67 @@ public class UsersController {
         return "accountcreated";
     }
 
-    @RequestMapping(method=RequestMethod.GET, value="/enterpayment")
+/*    @RequestMapping(method=RequestMethod.GET, value="/enterpayment")
     public String enterPayment(Model model, Principal principal) {
         out.println("entered EnterPayment");
 
+        List<Purchase> purchasesPending = purchaseDao.findByUsersAndDateConfirm1IsNull(new Users(principal.getName()));
+        if(purchasesPending.size() > 1) {
+            System.out.println("WARNING: THERE IS MORE THAN 1 PENDING PURCHASE FOR "+principal.getName()+".");
+        }
 
-        out.println("/enterpayment, payTo: "+MyBean.kit.wallet().currentReceiveAddress().toString());
-        model.addAttribute("payTo", MyBean.kit.wallet().currentReceiveAddress().toString());
+        if(purchasesPending.size() > 0) {
+            model.addAttribute("pendingPurchase", purchasesPending.get(0));
+            model.addAttribute("payTo", purchasesPending.get(0).getReceivingAddress());
+        } else if(purchasesPending.size() == 0) {
+            Address address = MyBean.kit.wallet().freshReceiveAddress();
+            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
+            Purchase savedPendingPurchase = purchaseDao.save(newPendingPurchase);
+            out.println("/enterpayment, payTo: "+savedPendingPurchase.getReceivingAddress());
+            model.addAttribute("payTo", savedPendingPurchase.getReceivingAddress());
+        }
 
         return "enterpayment";
+    }*/
+
+    @RequestMapping(method=RequestMethod.GET, value="/qrcode")
+    public void qrcode(Principal principal, HttpServletResponse response, HttpSession session) {
+
+        List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
+        /*if(unconfirmedPurchases.isEmpty()) {
+            Address address = MyBean.kit.wallet().freshReceiveAddress();
+            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
+            savedPendingPurchase = purchaseDao.save(newPendingPurchase);
+        } else {
+            savedPendingPurchase = unconfirmedPurchases.get(0);
+            if(unconfirmedPurchases.size() > 1) {
+                System.out.println("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
+            }
+        }*/
+
+        String qrCodeData = "bitcoin:"+unconfirmedPurchases.get(0).getReceivingAddress()+"?amount=0.1234";
+        //String charset="UTF-8"; // or "ISO-8859-1"
+        int qrCodeWidth = 200;
+        int qrCodeHeight = 200;
+        Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
+        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        byte[] qrCodeDataBytes = qrCodeData.getBytes();
+
+        try {
+            BitMatrix matrix = new MultiFormatWriter().encode(qrCodeData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight, hintMap);
+            response.setContentType("image/jpeg");
+            MatrixToImageWriter.writeToStream(matrix, "jpg", response.getOutputStream());
+            response.flushBuffer();
+        } catch (Exception ex) {
+            System.out.println("Failed to write QRcode to output stream.");
+            throw new RuntimeException("IOError writing QRcode to output stream");
+        }
     }
 
     @RequestMapping(method=RequestMethod.GET, value = "/")
     public String index(String filename, Model model) {
         return "index";
     }
-
-/*
-    @RequestMapping(method=RequestMethod.GET, value = "/task")
-    public String task(Model model) {
-        return "task";
-    }
-*/
 
     @RequestMapping(method=RequestMethod.GET, value = "/layout")
     public String layout(Model model) {
@@ -607,12 +676,14 @@ public class UsersController {
      */
     @RequestMapping(value = "/generatecaptcha", method = RequestMethod.GET)
     public void generateCaptcha(Model model, HttpServletResponse response, HttpSession session) { //ResponseEntity<CaptchaRequestData> generateCaptcha(HttpSession session) {
-        Cage currGcage = new GCage();
+        Cage currGcage = new YCage();
         String captchaToken = currGcage.getTokenGenerator().next();
         out.println("captchaToken: "+captchaToken);
+/*
         if (captchaToken.length() >= 7) {
             captchaToken = captchaToken.substring(0, 7).toUpperCase();
         }
+*/
 
         //Setting the captcha token in http session
         session.setAttribute("captchaToken", captchaToken);

@@ -18,10 +18,9 @@ public class Purchase {
     public Purchase() {
     }
 
-    public Purchase(Timestamp dateInitiated, BigDecimal amount, String receivingAddress, Users users) {
-        //this.id = id;
+    public Purchase(Timestamp dateInitiated, /*BigDecimal amount,*/ String receivingAddress, Users users) {
         this.dateInitiated = dateInitiated;
-        this.amount = amount;
+    //    this.amount = amount;
         this.receivingAddress = receivingAddress;
         this.users = users;
     }
@@ -129,6 +128,20 @@ public class Purchase {
             return false;
 
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Purchase{" +
+                "id=" + id +
+                ", dateInitiated=" + dateInitiated +
+                ", amount=" + amount +
+                ", receivingAddress='" + receivingAddress + '\'' +
+                ", dateConfirm1=" + dateConfirm1 +
+                ", dateConfirm3=" + dateConfirm3 +
+                ", dateConfirm6=" + dateConfirm6 +
+                ", users=" + users.getUsername() +
+                '}';
     }
 
     @Override

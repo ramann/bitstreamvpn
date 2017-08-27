@@ -1,36 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
-    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
-</head>
+<head th:replace="layout :: head"></head>
 <body>
 <header th:replace="layout :: header">
 </header>
 
-<div th:fragment="content">
+<div class="container" th:fragment="content">
 
     <div th:if="${username == null}">
         <div>What are you doing here? This is for cert revocations only.</div>
     </div>
     <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + '. You must be here to revoke a cert.'">Hi, username</div>
-        <pre th:text="${certificate.certText}">certificate text</pre>
+        <div th:text=" 'Hi ' + ${username} + '. You must be here to revoke a cert.'">Hi, username</div>
+        <pre th:text="${certInfo}">certificate text</pre>
     </div>
 
     <form name="f" th:action="@{/revoke}" method="post">
         <fieldset>
-            <legend>Revoke Certificate</legend>
-            <p>Hi</p>
-
+            <div class="alert alert-danger" th:if="${password_error} != null" th:text="${password_error}"></div>
             <label for="password">Please confirm your password</label>
-            <input type="password" id="password" name="password"/>
-            <p th:if="${password_error} != null" th:text="${password_error}"></p><br/>
-
+            <input type="password" id="password" name="password"/><br/>
             <label>Select a revocation reason:</label>
-            <input type="radio" name="reason" value="0">unspecified</input>
-            <input type="radio" name="reason" value="1">keyCompromise</input>
-            <input type="radio" name="reason" value="5">cessationOfOperation</input>
+            <input type="radio" name="reason" value="1">Key Compromise</input>
+            <input type="radio" name="reason" value="5">Cessation of Operation</input>
+            <input type="radio" name="reason" value="0">Unspecified</input>
             <p th:if="${reason_error} != null" th:text="${reason_error}">reason error</p><br/>
             <input type="hidden" name="serial" th:value="${certificate.serial}"/>
         </fieldset>
@@ -43,7 +36,7 @@
             <p th:if="${captcha_error} != null" th:text="${captcha_error}"></p><br/><br/><br/>
         </fieldset>-->
         <div class="form-actions">
-            <button type="submit" class="btn">Next: Payment info</button>
+            <button type="submit" class="btn">Revoke Cert</button>
         </div>
     </form>
 </div>

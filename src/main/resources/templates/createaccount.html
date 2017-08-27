@@ -1,23 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
-    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
-</head>
+<head th:replace="layout :: head"></head>
 <body>
 <header th:replace="layout :: header">
 </header>
 
-<div th:fragment="content">
+<div class="container" th:fragment="content">
     <form name="f" th:action="@{/createaccount}" method="post">
-        <fieldset>
-            <legend>Are you a robot?</legend>
-            <img th:src="@{/generatecaptcha}"/>
-            <label for="captcha">Captcha:</label>
-            <input type="text" id="captcha" name="captcha"/>
-            <p th:if="${captcha_error} != null" th:text="${captcha_error}"></p><br/><br/><br/>
-        </fieldset>
-        <fieldset>
+
             <legend>Please Create Account</legend>
             <label for="username">Username</label>
             <input type="text" id="username" name="username" th:value="${username}"/>
@@ -30,9 +20,13 @@
             <label for="confirmPassword">Confirm Password</label>
             <input type="password" id="confirmPassword" name="confirmPassword"/>
             <p th:if="${password_confirm_error} != null" th:text="${password_confirm_error}"></p><br/>
-        </fieldset>
+
+            <br/><label for="captcha">Enter the value shown below.</label><br/>
+            <div class="alert alert-danger" th:if="${captcha_error} != null" th:text="${captcha_error}"></div>
+            <img th:src="@{/generatecaptcha}"/><br/>
+            <input type="text" id="captcha" name="captcha"/>
         <div class="form-actions">
-            <button type="submit" class="btn">Next: Payment info</button>
+            <button type="submit" class="btn">Create Account</button>
         </div>
     </form>
 </div>

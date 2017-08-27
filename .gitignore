@@ -1,3 +1,6 @@
+*.keystore
+*.wallet
+*.spvchain
 .idea
 .gradle
 /target

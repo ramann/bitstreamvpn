@@ -3,6 +3,7 @@ package com.company.dev.model;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.List;
 
 
@@ -27,4 +28,9 @@ public interface PurchaseDao extends CrudRepository<Purchase, Long> {
 
     public Purchase findById(int purchaseId);
 
+    public List<Purchase> findByUsersAndDateConfirm1IsNull(Users users);
+
+    public List<Purchase> findByUsersAndDateConfirm1IsNotNull(Users users);
+
+    public List<Purchase> findByReceivingAddress(String address);
 } // class UserDao

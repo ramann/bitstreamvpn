@@ -33,12 +33,12 @@ public class MyBean implements CommandLineRunner {
     public void run(String... args) {
         System.out.println("========= IS THIS THING ON =========");
 
-        //NetworkParameters params;
+        NetworkParameters params;
         String filePrefix;
-//        params = RegTestParams.get();
+        params = RegTestParams.get();
 
         filePrefix = "forwarding-service-regtest";
-        Context context = new Context(RegTestParams.get());
+        Context context = new Context(params);
         // Start up a basic app using a class that automates some boilerplate.
         kit = new WalletAppKit(context, new File("."), filePrefix);
 
@@ -65,10 +65,10 @@ public class MyBean implements CommandLineRunner {
                 Users users = usersDao.findByUsername("mark"); //principal.getName()
                 Date d = new Date();
 
-                Purchase p = new Purchase(new Timestamp(d.getTime()), new BigDecimal(value.getValue()).movePointLeft(Coin.SMALLEST_UNIT_EXPONENT), kit.wallet().currentReceiveAddress().toString(), users);
+                //Purchase p = new Purchase(new Timestamp(d.getTime()), new BigDecimal(value.getValue()).movePointLeft(Coin.SMALLEST_UNIT_EXPONENT), kit.wallet().currentReceiveAddress().toString(), users);
 
                 try {
-                    purchaseDao.save(p);
+                //    purchaseDao.save(p);
                 } catch (Exception ex) {
                     System.out.println("Error creating the purchase: " + ex.toString());
                 }
@@ -86,9 +86,22 @@ public class MyBean implements CommandLineRunner {
                         //forwardCoins(tx);
                         System.out.println("Some coins were received");
 
-                        p.setDateConfirm1(new Timestamp(new Date().getTime()));
+                        for(TransactionOutput t: tx.getOutputs()) {
+
+                            System.out.println("output1: "+t.getAddressFromP2SH(params));
+                            System.out.println("output2: "+t.getAddressFromP2PKHScript(params));
+
+                            for (Purchase p:purchaseDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
+                                p.setDateConfirm1(new Timestamp(new Date().getTime()));
+                                p.setAmount(new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8));
+                                purchaseDao.save(p);
+                            }
+
+                        }
+
+                    //    p.setDateConfirm1(new Timestamp(new Date().getTime()));
                         try {
-                            purchaseDao.save(p);
+                    //        purchaseDao.save(p);
                         } catch (Exception ex) {
                             System.out.println("Error save confirmation 1: " + ex.toString());
                         }

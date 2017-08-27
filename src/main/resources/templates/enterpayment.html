@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <link href="../css/bootstrap.min.css" rel="stylesheet" media="screen" th:href="@{/css/bootstrap.min.css}"/>
-    <link href="../css/core.css" rel="stylesheet" media="screen" th:href="@{/css/core.css}"/>
-</head>
+<head th:replace="layout :: head"></head>
 <body>
 <header th:replace="layout :: header">
 </header>
 
-<div th:fragment="content">
+<div class="container" th:fragment="content">
     <form name="f" th:action="@{/accountsetup}" method="post">
-        <p>Account Setup</p>
-        <p>Confirm Details</p>
-        <p>Submit</p>
         <fieldset>
             <legend>Please Send Payment</legend>
             <p title="payTo" th:text="'pay to: ' + ${payTo}">payTo</p>
+
+            <div th:if="${pendingPurchase != null}">You've already initiated a payment. It will need to have at least one confirmation before you can initiate another one.</div>
             <!--<label for="btc">BTC:</label>
             <input type="text" id="btc" name="btc" th:value="${btc}"/>
             <p th:if="${bitcoin_error} != null" th:text="${bitcoin_error}"></p><br/>-->

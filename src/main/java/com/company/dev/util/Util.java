@@ -1,13 +1,16 @@
 package com.company.dev.util;
 
+import com.company.dev.model.Certificate;
 import com.sun.deploy.util.StringUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.generators.SCrypt;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -35,6 +38,12 @@ public class Util {
         List subjectElements = Arrays.asList(subject.split(","));
         Collections.reverse(subjectElements);
         return StringUtils.join(subjectElements, ", ");
+    }
+
+    public static String printBasicCertInfo(X509CertificateHolder cert) {
+        return "serial: "+cert.getSerialNumber()+"\n"+
+                "subject: "+ cert.getSubject().toString()+"\n"+
+                "expires on "+dateToGMT(cert.getNotAfter()); // TODO display time in GMT
     }
 
     public static String prettyPrintCert(String uglyCert) {
