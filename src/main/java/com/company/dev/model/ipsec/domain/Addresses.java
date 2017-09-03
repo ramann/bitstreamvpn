@@ -1,12 +1,10 @@
 package com.company.dev.model.ipsec.domain;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Arrays;
 
 @Entity
+@Table(name="addresses")
 public class Addresses {
     private int id;
     private int pool;

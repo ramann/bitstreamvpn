@@ -13,6 +13,8 @@ import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.pkcs.RSAPublicKey;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.boot.*;
 import org.springframework.stereotype.*;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -29,6 +32,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 
 import static com.company.dev.util.Util.reverseSubject;
@@ -60,6 +64,12 @@ public class MyBean implements CommandLineRunner {
 
     @Autowired
     private AddressesDao addressesDao;
+
+    @Autowired
+    private PrivateKeysDao privateKeysDao;
+
+    @Autowired
+    private PrivateKeyIdentityDao privateKeyIdentityDao;
 
     public void run(String... args) {
 
@@ -96,7 +106,12 @@ public class MyBean implements CommandLineRunner {
             Identities savedCaPubKeyIdentity = identitiesDao.save(caPubKeyIdentity);
 
             /* Insert CA identity (subject key id) */
-            Identities caSubjKeyIdentity = new Identities((byte) 11, caCert.getExtensionValue(Extension.subjectKeyIdentifier.toString()));
+            // TODO: do not use this - it only works if the oid is there in the cert. grab from the pub key
+            byte[] caSubjKeyIdData = caCert.getExtensionValue(Extension.subjectKeyIdentifier.toString()); // gives us 041604142485D6C13EA7CF7F25F4A18AB5D4661EA0282A78
+            System.out.println("bad length: "+caSubjKeyIdData.length);
+            byte[] caSubjKeyIdDataTrimmed = Arrays.copyOfRange(caSubjKeyIdData,4,caSubjKeyIdData.length); // we want 2485D6C13EA7CF7F25F4A18AB5D4661EA0282A78
+            System.out.println("good length: "+caSubjKeyIdDataTrimmed.length);
+            Identities caSubjKeyIdentity = new Identities((byte) 11, caSubjKeyIdDataTrimmed);
             Identities savedCaSubjKeyIdentity = identitiesDao.save(caSubjKeyIdentity);
 
             /* Insert certificate identities for CA cert */
@@ -123,9 +138,10 @@ public class MyBean implements CommandLineRunner {
             addressesDao.save(new Addresses(pools.getId(), InetAddress.getByName("10.11.12.16").getAddress()));
 
             /* Insert server cert */
-            X509Certificate serverCert = (X509Certificate) keyStore.getCertificate("servercert");
+            X509Certificate serverCert = (X509Certificate) keyStore.getCertificate("javaserveralias");
             Certificates serverCertificates = new Certificates((byte) 1, (byte) 1, serverCert.getEncoded());
-            Certificates savedServerCertificates = certificatesDao.save(savedCaCertificates);
+            Certificates savedServerCertificates = certificatesDao.save(serverCertificates);
+
 
             /* Insert Server identity (subject ASN.1 string) */
             X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
@@ -136,10 +152,38 @@ public class MyBean implements CommandLineRunner {
 
             /* Insert Server identity (pub key id) */
             Identities serverPubKeyIdentity = new Identities((byte) 11, new DigestUtils().sha1(serverCert.getPublicKey().getEncoded()));
+            System.out.println("serverPubKeyIdentity: "+DatatypeConverter.printHexBinary(new DigestUtils().sha1(serverCert.getPublicKey().getEncoded())));
             Identities savedServerPubKeyIdentity = identitiesDao.save(serverPubKeyIdentity);
+System.out.println("reached");
 
-            /* Insert CA identity (subject key id) */
-            Identities serverSubjKeyIdentity = new Identities((byte) 11, serverCert.getExtensionValue(Extension.subjectKeyIdentifier.toString()));
+            /*
+             * Insert Server identity (subject key id)
+             * Per ./src/libstrongswan/plugins/pkcs1/pkcs1_encoder.c, this is the ASN.1 sequence that wraps the
+             * modulus and exponent of the public key
+             */
+            byte[] serverKeyIdentity = null;
+            ByteArrayInputStream inStream = new ByteArrayInputStream(serverCert.getPublicKey().getEncoded());
+            ASN1InputStream asnInputStream = new ASN1InputStream(inStream);
+            ASN1Primitive pubKeyAsn1 = asnInputStream.readObject();
+            for (ASN1Encodable a : ASN1Sequence.getInstance(pubKeyAsn1).toArray()) {
+                if( a instanceof ASN1Sequence) { System.out.println("is sequence");}
+                else { System.out.println("is not sequence"); }
+                if (a instanceof ASN1BitString) {
+                    System.out.println("is bitstring");
+                    ASN1BitString b = (ASN1BitString) a;
+                    serverKeyIdentity = new DigestUtils().sha1(b.getOctets());
+                    System.out.println("sha1 of octets: "+DatatypeConverter.printHexBinary(serverKeyIdentity));
+                }
+                else { System.out.println("is not bitstring"); }
+            }
+            // do not use this - it only works if the oid is there in the cert. grab from the pub key
+            /*byte[] subjKeyIdData = serverCert.getExtensionValue(Extension.subjectKeyIdentifier.toString());
+            System.out.println("reached2");
+            System.out.println("subjKeyIdData is null? "+(subjKeyIdData== null));
+            System.out.println("bad length: "+subjKeyIdData.length);
+            byte[] subjKeyIdDataTrimmed = Arrays.copyOfRange(subjKeyIdData,4,subjKeyIdData.length);
+            System.out.println("good length: "+subjKeyIdDataTrimmed.length);*/
+            Identities serverSubjKeyIdentity = new Identities((byte) 11, serverKeyIdentity);
             Identities savedServerSubjKeyIdentity = identitiesDao.save(serverSubjKeyIdentity);
 
             /* Insert certificate identities for server cert */
@@ -147,8 +191,37 @@ public class MyBean implements CommandLineRunner {
             certificateIdentityDao.save(new CertificateIdentity(savedServerCertificates.getId(), savedServerPubKeyIdentity.getId()));
             certificateIdentityDao.save(new CertificateIdentity(savedServerCertificates.getId(), savedServerSubjKeyIdentity.getId()));
 
+            /* Insert server private key */
+            PrivateKey serverPrivateKey = (PrivateKey) keyStore.getKey("javaserveralias", "changeit".toCharArray());
+            ByteArrayInputStream serverPrivKeyInStream = new ByteArrayInputStream(serverPrivateKey.getEncoded());
+            ASN1InputStream serverPrivKeyAsn1InputStream = new ASN1InputStream(serverPrivKeyInStream);
+            ASN1Primitive privKeyAsn1 = serverPrivKeyAsn1InputStream.readObject();
+            byte[] serverPrivKeyOpensslForm = null;
+            for (ASN1Encodable a : ASN1Sequence.getInstance(privKeyAsn1).toArray()) {
+                if ( a instanceof ASN1OctetString) {
+                    System.out.println("is ASN1OctetString");
+                    ASN1OctetString o = (ASN1OctetString) a;
+                    serverPrivKeyOpensslForm = o.getOctets();
+                    System.out.println("serverPrivKeyOpensslForm: "+DatatypeConverter.printHexBinary(serverPrivKeyOpensslForm));
+                }
+                else {
+                    System.out.println("isn't ASN1OctetString");
+                }
+            }
+
+            PrivateKeys serverPrivateKeys = new PrivateKeys((byte) 1, serverPrivKeyOpensslForm);
+            PrivateKeys savedServerPrivateKeys = privateKeysDao.save(serverPrivateKeys);
+
+            PrivateKeyIdentity pkIdentServerSubject = new PrivateKeyIdentity(savedServerPrivateKeys.getId(), savedServerSubjectIdentity.getId());
+            PrivateKeyIdentity pkIdentPubKey = new PrivateKeyIdentity(savedServerPrivateKeys.getId(), savedServerPubKeyIdentity.getId());
+            PrivateKeyIdentity pkIdentSubjKey = new PrivateKeyIdentity(savedServerPrivateKeys.getId(), savedServerSubjKeyIdentity.getId());
+
+            PrivateKeyIdentity savedPkIdentServerSubject =  privateKeyIdentityDao.save(pkIdentServerSubject);
+            PrivateKeyIdentity savedPkIdentPubKey = privateKeyIdentityDao.save(pkIdentPubKey);
+            PrivateKeyIdentity savedpkIdentSubjKey = privateKeyIdentityDao.save(pkIdentSubjKey);
+
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println(e.getMessage());
         }
 
         /**

@@ -9,6 +9,13 @@ public class PrivateKeyIdentity {
     private int privateKey;
     private int identity;
 
+    public PrivateKeyIdentity() {}
+
+    public PrivateKeyIdentity(int privateKey, int identity) {
+        this.privateKey = privateKey;
+        this.identity = identity;
+    }
+
     @Id
     @Column(name = "private_key", nullable = false)
     public int getPrivateKey() {

@@ -10,8 +10,16 @@ public class PrivateKeys {
     private byte type;
     private byte[] data;
 
+    public PrivateKeys() {}
+
+    public PrivateKeys(byte type, byte[] data) {
+        this.type = type;
+        this.data = data;
+    }
+
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getId() {
         return id;
     }

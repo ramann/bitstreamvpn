@@ -1,0 +1,1 @@
+INSERT INTO testipsecdb.pools (name, start, end, timeout) VALUES ('bigpool', 0x0A0B0C0D, 0x0A0B0C10, 0);

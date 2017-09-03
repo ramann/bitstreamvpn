@@ -1,14 +1,17 @@
 # The (ca|peer1|peer2)(Key|PubKey|Cert).(pem|der) files were created using the `ipsec pki` commands found on strongswan.org
 # and openssl extract the pubkey; and to convert der to pem
 
-# create a pkcs12 bundle of the CA cert
-openssl pkcs12 -export -out javaserver.p12 -name javaalias -in caCert.pem -inkey caKey.pem -CAfile caCert.pem -caname root
+# create a pkcs12 bundle of the CA cert & key
+openssl pkcs12 -export -out javaca.p12 -name javaalias -in caCert.pem -inkey caKey.pem -CAfile caCert.pem -caname root
 
 # create a java keystore of pkcs12 CA bundle
-keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore server.keystore -srckeystore javaserver.p12 -srcstoretype PKCS12 -srcstorepass testing -alias javaalias
+keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore server.keystore -srckeystore javaca.p12 -srcstoretype PKCS12 -srcstorepass testing -alias javaalias
 
 # list contents
 keytool -list -v -keystore server.keystore
 
-# import server cert
-keytool -import -alias servercert -keystore server.keystore -file peer2Cert.pem
+# create a pkcs12 bundler of the server cert & key
+openssl pkcs12 -export -out javaserver.p12 -name javaserveralias -in peer2Cert.pem -inkey peer2Key.pem
+
+# import pkcs12 server bundle into keystore
+keytool -importkeystore -destkeystore server.keystore -srckeystore javaserver.p12 -srcstoretype PKCS12 -srcstorepass testing -alias javaserveralias
