@@ -1,14 +1,17 @@
 package com.company.dev.controller;
 
-import com.company.dev.model.*;
-import com.company.dev.model.Certificate;
+import com.company.dev.model.app.domain.Certificate;
+import com.company.dev.model.app.domain.Purchase;
+import com.company.dev.model.app.domain.Users;
+import com.company.dev.model.app.repo.CertificateDao;
+import com.company.dev.model.app.repo.PurchaseDao;
+import com.company.dev.model.app.repo.UsersDao;
+import com.company.dev.model.ipsec.domain.*;
+import com.company.dev.model.ipsec.repo.*;
 import com.company.dev.util.MyBean;
 import com.company.dev.util.Util;
 import com.github.cage.Cage;
-import com.github.cage.GCage;
 import com.github.cage.YCage;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -17,27 +20,23 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.tomcat.jni.Time;
 import org.bitcoinj.core.*;
-import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.RegTestParams;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
-import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1SequenceParser;
+import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.*;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.provider.PEMUtil;
-import org.bouncycastle.openssl.PEMDecryptor;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
@@ -48,18 +47,12 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import org.bouncycastle.x509.X509V2CRLGenerator;
-import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.util.DateUtils;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 
@@ -68,22 +61,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Path;
-import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-import javax.validation.metadata.ConstraintDescriptor;
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.util.*;
-
-import org.bouncycastle.asn1.x509.*;
 
 import static com.company.dev.util.Util.*;
 import static java.lang.System.out;
@@ -147,7 +132,7 @@ public class UsersController {
         try {
             BigInteger certSerial = BigInteger.valueOf(Long.valueOf(serial));
 
-            InputStream is = new FileInputStream("/home/ram/pki-java/server.keystore");
+            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
 
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
@@ -155,7 +140,7 @@ public class UsersController {
 
             PrivateKey caKey = (PrivateKey) keyStore.getKey(alias, "changeit".toCharArray());
 
-            X509v2CRLBuilder crlGen = new X509v2CRLBuilder(new X500Name("O=Company Name, OU=Signing CA, CN=website.example"),
+            X509v2CRLBuilder crlGen = new X509v2CRLBuilder(new X500Name("C=US, O=test, CN=testCA"),
                     new Date(System.currentTimeMillis()));
             crlGen.addCRLEntry(certSerial, new Date(System.currentTimeMillis()), reason);
             crlGen.setNextUpdate(new Date(System.currentTimeMillis() + (1 * 86400000L)));
@@ -223,72 +208,76 @@ public class UsersController {
         try {
             Purchase purchase = purchaseDao.findById(Integer.valueOf(purchaseId));
             System.out.println("found purchase!");
-            is = new FileInputStream("/home/ram/pki-java/server.keystore");
+            is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
 
             Security.addProvider(new BouncyCastleProvider());
 
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(is, "changeit".toCharArray());
-        String alias = "javaalias";
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(is, "changeit".toCharArray());
+            String alias = "javaalias";
 
-        PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
-        X509Certificate cacert = (X509Certificate) keyStore.getCertificate("javaalias");
+            PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
+            X509Certificate cacert = (X509Certificate) keyStore.getCertificate("javaalias");
 
-        PemReader pemReader = new PemReader(new StringReader(csr));
-        PemObject pemObject = pemReader.readPemObject();
-        System.out.println("pemObject created");
-        PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObject.getContent());
-        System.out.println("the content: "+Base64.encodeBase64String(pemObject.getContent()));
+            PemReader pemReader = new PemReader(new StringReader(csr));
+            PemObject pemObject = pemReader.readPemObject();
+            System.out.println("pemObject created");
+            PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObject.getContent());
+            System.out.println("the content: "+Base64.encodeBase64String(pemObject.getContent()));
 
-            BigInteger serial;
-            serial = new BigInteger( 32, new SecureRandom() );
+                BigInteger serial;
+                serial = new BigInteger( 32, new SecureRandom() );
 
-        Certificate certificate = new Certificate(new Timestamp(new Date().getTime()), Base64.encodeBase64String(pemObject.getContent()), false, purchase, serial.longValue());
-        Certificate savedCert = certificateDao.save(certificate);
-        AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find( "SHA512withRSA" );
-        AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find( sigAlgId );
-        X500Name issuer;
-        //issuer = new X500Name( "O=Company Name, OU=Signing CA, CN=website.example" );
-        System.out.println("CA name"+ cacert.getSubjectX500Principal().getName());
-        System.out.println("subject reversed: "+ Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
-        issuer = new X500Name(Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
+            Certificate certificate = new Certificate(new Timestamp(new Date().getTime()), Base64.encodeBase64String(pemObject.getContent()), false, purchase, serial.longValue());
+            Certificate savedCert = certificateDao.save(certificate);
+            AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find( "SHA256withRSA" );
+            AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find( sigAlgId );
+            X500Name issuer;
 
 
-        //serial = BigInteger.valueOf(24);
+            //issuer = new X500Name( "O=Company Name, OU=Signing CA, CN=website.example" );
+            System.out.println("CA name"+ cacert.getSubjectX500Principal().getName());
+            System.out.println("subject reversed: "+ Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
+            issuer = new X500Name(Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
 
-        Date from;
-        from = new Date();
-        Date to;
-         to = new Date( System.currentTimeMillis() + ( 1 * 86400000L ) );
 
-        DigestCalculator digCalc = new BcDigestCalculatorProvider().get( new AlgorithmIdentifier( OIWObjectIdentifiers.idSHA1 ) );
-        X509ExtensionUtils x509ExtensionUtils = new X509ExtensionUtils( digCalc );
-        X509v3CertificateBuilder certgen;
-        certgen = new X509v3CertificateBuilder( issuer, serial, from, to, pkcs10CertificationRequest.getSubject(), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
-            //certgen = new X509v3CertificateBuilder( issuer, serial, from, to, new X500Name("O=Company Name, OU=Server1, CN=website.example"), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
+            //serial = BigInteger.valueOf(24);
 
-        certgen.addExtension( Extension.basicConstraints, false, new BasicConstraints( false ) );
-        certgen.addExtension(Extension.keyUsage, true, new KeyUsage( KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
-        KeyPurposeId[] usages = {KeyPurposeId.id_kp_emailProtection, KeyPurposeId.id_kp_clientAuth};
-        certgen.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(usages));
-        certgen.addExtension(Extension.subjectKeyIdentifier, false, new SubjectKeyIdentifier(new DigestUtils().sha1(pkcs10CertificationRequest.getSubjectPublicKeyInfo().parsePublicKey().getEncoded())));
+            Date from;
+            from = new Date();
+            Date to;
+             to = new Date( System.currentTimeMillis() + ( 1 * 86400000L ) );
 
-        X509CertificateHolder caCertHolder = new X509CertificateHolder(keyStore.getCertificate("javaalias").getEncoded());
-        DigestCalculator dc = new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1));
-        AuthorityKeyIdentifier aki =  new X509ExtensionUtils(dc).createAuthorityKeyIdentifier(caCertHolder.getSubjectPublicKeyInfo());
-        certgen.addExtension(Extension.authorityKeyIdentifier, false, aki);
+            DigestCalculator digCalc = new BcDigestCalculatorProvider().get( new AlgorithmIdentifier( OIWObjectIdentifiers.idSHA1 ) );
+            X509ExtensionUtils x509ExtensionUtils = new X509ExtensionUtils( digCalc );
+            X509v3CertificateBuilder certgen;
+            certgen = new X509v3CertificateBuilder( issuer, serial, from, to, pkcs10CertificationRequest.getSubject(), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
+                //certgen = new X509v3CertificateBuilder( issuer, serial, from, to, new X500Name("O=Company Name, OU=Server1, CN=website.example"), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
 
-        ContentSigner signer = new BcRSAContentSignerBuilder( sigAlgId, digAlgId ).build( PrivateKeyFactory.createKey( caKey.getEncoded() ) );
-        X509CertificateHolder holder = certgen.build(signer);
+    /*
+            certgen.addExtension( Extension.basicConstraints, false, new BasicConstraints( false ) );
+            certgen.addExtension(Extension.keyUsage, true, new KeyUsage( KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+            KeyPurposeId[] usages = {KeyPurposeId.id_kp_emailProtection, KeyPurposeId.id_kp_clientAuth};
+            certgen.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(usages));
+            certgen.addExtension(Extension.subjectKeyIdentifier, false, new SubjectKeyIdentifier(new DigestUtils().sha1(pkcs10CertificationRequest.getSubjectPublicKeyInfo().parsePublicKey().getEncoded())));
+    */
 
-        //Security.addProvider(new BouncyCastleProvider());
-        X509Certificate x509Certificate =  new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate( holder );
-        out.println("x509certificate: "+x509Certificate.toString());
-        System.out.println("encoded: "+Base64.encodeBase64String(x509Certificate.getEncoded()));
+            X509CertificateHolder caCertHolder = new X509CertificateHolder(keyStore.getCertificate("javaalias").getEncoded());
+            DigestCalculator dc = new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1));
+            AuthorityKeyIdentifier aki =  new X509ExtensionUtils(dc).createAuthorityKeyIdentifier(caCertHolder.getSubjectPublicKeyInfo());
+            certgen.addExtension(Extension.authorityKeyIdentifier, false, aki);
 
-        savedCert.setCertText(Base64.encodeBase64String(x509Certificate.getEncoded()));
-        savedCert.setRevoked(false);
-        certificateDao.save(savedCert);
+            ContentSigner signer = new BcRSAContentSignerBuilder( sigAlgId, digAlgId ).build( PrivateKeyFactory.createKey( caKey.getEncoded() ) );
+            X509CertificateHolder holder = certgen.build(signer);
+
+            //Security.addProvider(new BouncyCastleProvider());
+            X509Certificate x509Certificate =  new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate( holder );
+            out.println("x509certificate: "+x509Certificate.toString());
+            System.out.println("encoded: "+Base64.encodeBase64String(x509Certificate.getEncoded()));
+
+            savedCert.setCertText(Base64.encodeBase64String(x509Certificate.getEncoded()));
+            savedCert.setRevoked(false);
+            certificateDao.save(savedCert);
 
             String certNice = "";
             BASE64Encoder encoder = new BASE64Encoder();
@@ -299,12 +288,78 @@ public class UsersController {
             certNice += X509Factory.END_CERT;
             System.out.println("cert: "+certNice);
             prettyPrintCert(Base64.encodeBase64String(x509Certificate.getEncoded()));
+
+            System.out.println("getName: "+reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
+
+            insertIpsecRecordsForClient(x509Certificate);
+
+
+
         } catch (Exception e) {
             out.println("Exception: "+e);
             return "Arghh!";
         }
 
         return "redirect:/certs?purchaseId="+purchaseId;
+    }
+
+    private void insertIpsecRecordsForClient(X509Certificate x509Certificate) {
+        try {
+            // using X500Name
+            X500Name x500name = new X500Name(reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
+            System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(x500name.getEncoded()));
+            System.out.println(DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
+
+            Identities identities = new Identities((byte) 11, x500name.getEncoded());
+            Identities savedIdentities = identitiesDao.save(identities);
+
+            Certificates certificates = new Certificates((byte) 1, (byte) 1, x509Certificate.getEncoded());
+            Certificates savedCertificates = certificatesDao.save(certificates);
+
+            CertificateIdentity certificateIdentity = new CertificateIdentity(savedCertificates.getId(), savedIdentities.getId());
+            certificateIdentityDao.save(certificateIdentity);
+
+            IkeConfigs ikeConfigs = new IkeConfigs("174.138.46.113", "0.0.0.0");
+            IkeConfigs savedIkeConfigs = ikeConfigsDao.save(ikeConfigs);
+
+            X509Certificate serverCert = getServerCert();
+            X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
+            Identities savedServerSubjectIdentity = identitiesDao.findByData(serverX500Name.getEncoded());
+
+            PeerConfigs peerConfigs = new PeerConfigs("rw",
+                    savedIkeConfigs.getId(),
+                    Integer.toString(savedServerSubjectIdentity.getId()),
+                    Integer.toString(savedIdentities.getId()),
+                    "bigpool");
+            PeerConfigs savedPeerConfigs = peerConfigsDao.save(peerConfigs);
+
+            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/libexec/ipsec/_updown iptables"); // TODO: this script should be default
+            ChildConfigs savedChildConfigs = childConfigsDao.save(childConfigs);
+
+            PeerConfigChildConfig peerConfigChildConfig = new PeerConfigChildConfig(savedPeerConfigs.getId(), savedChildConfigs.getId());
+            PeerConfigChildConfig savedPeerConfigChildConfig = peerConfigChildConfigDao.save(peerConfigChildConfig);
+
+            TrafficSelectors trafficSelectorLocal = new TrafficSelectors((byte)7);
+            TrafficSelectors savedTrafficSelectorLocal = trafficSelectorsDao.save(trafficSelectorLocal);
+
+            TrafficSelectors trafficSelectorRemote = new TrafficSelectors((byte)7);
+            TrafficSelectors savedTrafficSelectorRemote = trafficSelectorsDao.save(trafficSelectorRemote);
+
+            ChildConfigTrafficSelector childConfigTrafficSelectorLocal = new ChildConfigTrafficSelector(savedChildConfigs.getId(),
+                    savedTrafficSelectorLocal.getId(), (byte)2);
+            ChildConfigTrafficSelector savedChildConfigTrafficSelectorLocal = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorLocal);
+
+            ChildConfigTrafficSelector childConfigTrafficSelectorRemote = new ChildConfigTrafficSelector(savedChildConfigs.getId(),
+                    savedTrafficSelectorRemote.getId(), (byte)2);
+            ChildConfigTrafficSelector savedChildConfigTrafficSelectorRemote = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorRemote);
+
+
+
+
+        } catch (Exception e) {
+            System.out.println("exception in insertIpsecRecordsForClient");
+            System.out.println(e);
+        }
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/myaccount")
@@ -527,8 +582,13 @@ public class UsersController {
     @RequestMapping("/greeting")
     public String greeting(@RequestParam(value="name", required=false, defaultValue="World") String name, Model model, HttpSession session) {
 
+        byte type = 11;
+        String data = "ce1a1c20a0b0e86104f9a0f0897e21177d92426b";
+        identitiesDao.save(new Identities(type, DatatypeConverter.parseHexBinary(data)));
         model.addAttribute("name", name);
         model.addAttribute("captchaToken", session.getAttribute("captchaToken"));
+
+
 
         return "greeting";
     }
@@ -713,4 +773,30 @@ public class UsersController {
     @Autowired
     CertificateDao certificateDao;
 
+    @Autowired
+    IdentitiesDao identitiesDao;
+
+    @Autowired
+    CertificatesDao certificatesDao;
+
+    @Autowired
+    CertificateIdentityDao certificateIdentityDao;
+
+    @Autowired
+    IkeConfigsDao ikeConfigsDao;
+
+    @Autowired
+    PeerConfigsDao peerConfigsDao;
+
+    @Autowired
+    ChildConfigsDao childConfigsDao;
+
+    @Autowired
+    PeerConfigChildConfigDao peerConfigChildConfigDao;
+
+    @Autowired
+    TrafficSelectorsDao trafficSelectorsDao;
+
+    @Autowired
+    ChildConfigTrafficSelectorDao childConfigTrafficSelectorDao;
 } // class UserController

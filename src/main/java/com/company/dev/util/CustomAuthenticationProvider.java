@@ -1,8 +1,8 @@
 package com.company.dev.util;
 
 
-import com.company.dev.model.Users;
-import com.company.dev.model.UsersDao;
+import com.company.dev.model.app.domain.Users;
+import com.company.dev.model.app.repo.UsersDao;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;

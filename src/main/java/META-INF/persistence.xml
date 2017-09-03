@@ -3,16 +3,14 @@
 
     <persistence-unit name="NewPersistenceUnit">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <mapping-file>com/company/dev/model/Product.xml</mapping-file>
-        <mapping-file>com/company/dev/model/Users.xml</mapping-file>
-        <mapping-file>com/company/dev/model/Purchase.xml</mapping-file>
-        <mapping-file>com/company/dev/model/Certificate.xml</mapping-file>
-        <mapping-file>com/company/dev/Certificate.xml</mapping-file>
-        <class>com.company.dev.model.Product</class>
-        <class>com.company.dev.model.Users</class>
-        <class>com.company.dev.model.Purchase</class>
-        <class>com.company.dev.model.Certificate</class>
-        <class>com.company.dev.Certificate</class>
+        <mapping-file>/com/company/dev/model/app/domain/Product.xml</mapping-file>
+        <mapping-file>/com/company/dev/model/app/domain/Users.xml</mapping-file>
+        <mapping-file>/com/company/dev/model/app/domain/Purchase.xml</mapping-file>
+        <mapping-file>/com/company/dev/model/app/domain/Certificate.xml</mapping-file>
+        <class>com.company.dev.model.app.domain.Product</class>
+        <class>com.company.dev.model.app.domain.Users</class>
+        <class>com.company.dev.model.app.domain.Purchase</class>
+        <class>com.company.dev.model.app.domain.Certificate</class>
         <properties>
             <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/test1"/>
             <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>

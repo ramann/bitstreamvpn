@@ -1,15 +1,20 @@
 package com.company.dev.util;
 
-import com.company.dev.model.Certificate;
+import com.company.dev.model.ipsec.domain.Identities;
+import com.company.dev.model.ipsec.repo.IdentitiesDao;
 import com.sun.deploy.util.StringUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.generators.SCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import javax.xml.bind.DatatypeConverter;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -97,4 +102,20 @@ public class Util {
         }
         return parts;
     }
+
+    public static X509Certificate getServerCert() {
+        X509Certificate serverCert = null;
+        try {
+            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(is, "changeit".toCharArray());
+            serverCert = (X509Certificate) keyStore.getCertificate("servercert");
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return serverCert;
+    }
+
 }

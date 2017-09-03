@@ -12,11 +12,11 @@
     <div th:unless="${username == null}">
         <div th:text="'Hi ' + ${username} + ', Welcome to your account.'">Hi, username</div>
     </div>
-    <div th:if="${pendingPurchase != null}">Before you can proceed, you'll need to send payment to the below address.</div>
+    <div th:if="${pendingPurchase != null}">Before you can proceed, you'll need to send payment to the below address. You'll be able to submit a CSR after it has confirmed.</div><br/>
     <div th:if="${pendingPurchase != null}" th:text="${pendingPurchase}"></div>
-    <img th:src="@{/qrcode}"/>
+    <img th:src="@{/qrcode}"/><br/>
     <div th:if="${confirmedPurchasesSize > 0}">
-        <p>Payment History</p>
+        <div>Payment History</div>
 <!--        <div class="row">
             <div class="col-sm-2">ID</div>
             <div class="col-sm-2">Date Initiated</div>
