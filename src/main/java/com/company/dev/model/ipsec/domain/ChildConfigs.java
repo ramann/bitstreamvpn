@@ -7,17 +7,17 @@ import javax.persistence.*;
 public class ChildConfigs {
     private int id;
     private String name;
-    private int lifetime;
-    private int rekeytime;
-    private int jitter;
+    private int lifetime = 1500;
+    private int rekeytime = 1200;
+    private int jitter = 60;
     private String updown;
-    private byte hostaccess;
-    private byte mode;
-    private byte startAction;
-    private byte dpdAction;
-    private byte closeAction;
-    private byte ipcomp;
-    private int reqid;
+    private byte hostaccess = 0;
+    private byte mode = 2;
+    private byte startAction = 0;
+    private byte dpdAction = 0;
+    private byte closeAction = 0;
+    private byte ipcomp = 0;
+    private int reqid = 0;
 
     public ChildConfigs() {}
 
@@ -28,6 +28,7 @@ public class ChildConfigs {
 
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getId() {
         return id;
     }

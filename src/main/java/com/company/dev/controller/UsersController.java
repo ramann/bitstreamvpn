@@ -199,6 +199,9 @@ public class UsersController {
         return "certs";
     }
 
+    // TODO java uses UTF8STRING but openssl uses PRINTABLESTRING ...
+    // TODO scripts/id2sql "C=US, O=test, CN=peer2" also uses PRINTABLESTRING so be mindful comparing its output with Java
+    // TODO should we use PRINTABLESTRING
     @RequestMapping(method=RequestMethod.POST, value="/certs")
     public String postCSR(Model model, Principal principal, String csr, String purchaseId) {
         model.addAttribute("username", principal.getName());
@@ -246,7 +249,7 @@ public class UsersController {
             Date from;
             from = new Date();
             Date to;
-             to = new Date( System.currentTimeMillis() + ( 1 * 86400000L ) );
+             to = new Date( System.currentTimeMillis() + ( 30 * 86400000L ) );
 
             DigestCalculator digCalc = new BcDigestCalculatorProvider().get( new AlgorithmIdentifier( OIWObjectIdentifiers.idSHA1 ) );
             X509ExtensionUtils x509ExtensionUtils = new X509ExtensionUtils( digCalc );
@@ -310,19 +313,20 @@ public class UsersController {
             System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(x500name.getEncoded()));
             System.out.println(DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
 
-            Identities identities = new Identities((byte) 11, x500name.getEncoded());
+            Identities identities = new Identities((byte) 9, x500name.getEncoded());
             Identities savedIdentities = identitiesDao.save(identities);
 
             Certificates certificates = new Certificates((byte) 1, (byte) 1, x509Certificate.getEncoded());
             Certificates savedCertificates = certificatesDao.save(certificates);
 
             CertificateIdentity certificateIdentity = new CertificateIdentity(savedCertificates.getId(), savedIdentities.getId());
-            certificateIdentityDao.save(certificateIdentity);
+            CertificateIdentity savedCertificateIdentity = certificateIdentityDao.save(certificateIdentity);
 
             IkeConfigs ikeConfigs = new IkeConfigs("174.138.46.113", "0.0.0.0");
             IkeConfigs savedIkeConfigs = ikeConfigsDao.save(ikeConfigs);
-
+System.out.println("finished saving ikeconfig");
             X509Certificate serverCert = getServerCert();
+            System.out.println("getServerCert is null? "+(serverCert==null));
             X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
             Identities savedServerSubjectIdentity = identitiesDao.findByData(serverX500Name.getEncoded());
 
@@ -350,7 +354,7 @@ public class UsersController {
             ChildConfigTrafficSelector savedChildConfigTrafficSelectorLocal = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorLocal);
 
             ChildConfigTrafficSelector childConfigTrafficSelectorRemote = new ChildConfigTrafficSelector(savedChildConfigs.getId(),
-                    savedTrafficSelectorRemote.getId(), (byte)2);
+                    savedTrafficSelectorRemote.getId(), (byte)3);
             ChildConfigTrafficSelector savedChildConfigTrafficSelectorRemote = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorRemote);
 
 

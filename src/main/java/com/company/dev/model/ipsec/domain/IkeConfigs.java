@@ -6,8 +6,8 @@ import javax.persistence.*;
 @Table(name = "ike_configs", schema = "testipsecdb", catalog = "")
 public class IkeConfigs {
     private int id;
-    private byte certreq;
-    private byte forceEncap;
+    private byte certreq = 1;
+    private byte forceEncap = 0;
     private String local;
     private String remote;
 
@@ -20,6 +20,7 @@ public class IkeConfigs {
 
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getId() {
         return id;
     }

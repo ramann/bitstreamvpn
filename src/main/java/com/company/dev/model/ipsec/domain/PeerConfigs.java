@@ -7,27 +7,27 @@ import javax.persistence.*;
 public class PeerConfigs {
     private int id;
     private String name;
-    private byte ikeVersion;
+    private byte ikeVersion = 2; // TODO can the defaults just be pulled from the DB during pojo generation?
     private int ikeCfg;
     private String localId;
     private String remoteId;
-    private byte certPolicy;
-    private byte uniqueid;
-    private byte authMethod;
-    private byte eapType;
-    private short eapVendor;
-    private byte keyingtries;
-    private int rekeytime;
-    private int reauthtime;
-    private int jitter;
-    private int overtime;
-    private byte mobike;
-    private int dpdDelay;
+    private byte certPolicy = 1;
+    private byte uniqueid = 0;
+    private byte authMethod = 1;
+    private byte eapType = 0;
+    private short eapVendor = 0;
+    private byte keyingtries = 3;
+    private int rekeytime = 7200;
+    private int reauthtime = 0;
+    private int jitter = 180;
+    private int overtime = 300;
+    private byte mobike = 1;
+    private int dpdDelay = 120;
     private String virtual;
     private String pool;
-    private byte mediation;
-    private int mediatedBy;
-    private int peerId;
+    private byte mediation = 0;
+    private int mediatedBy = 0;
+    private int peerId = 0;
 
     public PeerConfigs() {}
 
@@ -41,6 +41,7 @@ public class PeerConfigs {
 
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getId() {
         return id;
     }
@@ -220,7 +221,7 @@ public class PeerConfigs {
     }
 
     @Basic
-    @Column(name = "virtual", nullable = true, length = 40)
+    @Column(name = "`virtual`", nullable = true, length = 40)
     public String getVirtual() {
         return virtual;
     }

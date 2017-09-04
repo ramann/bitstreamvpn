@@ -7,12 +7,12 @@ import java.util.Arrays;
 @Table(name = "traffic_selectors", schema = "testipsecdb", catalog = "")
 public class TrafficSelectors {
     private int id;
-    private byte type;
-    private short protocol;
+    private byte type = 7;
+    private short protocol = 0;
     private byte[] startAddr;
     private byte[] endAddr;
-    private short startPort;
-    private short endPort;
+    private short startPort = 0;
+    private int endPort = 65535;
 
     public TrafficSelectors() {}
 
@@ -22,6 +22,7 @@ public class TrafficSelectors {
 
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public int getId() {
         return id;
     }
@@ -82,11 +83,11 @@ public class TrafficSelectors {
 
     @Basic
     @Column(name = "end_port", nullable = false)
-    public short getEndPort() {
+    public int getEndPort() {
         return endPort;
     }
 
-    public void setEndPort(short endPort) {
+    public void setEndPort(int endPort) {
         this.endPort = endPort;
     }
 

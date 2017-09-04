@@ -110,7 +110,7 @@ public class Util {
 
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
-            serverCert = (X509Certificate) keyStore.getCertificate("servercert");
+            serverCert = (X509Certificate) keyStore.getCertificate("javaserveralias");
 
         } catch (Exception e) {
             System.out.println(e);

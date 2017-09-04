@@ -1,0 +1,1 @@
+INSERT INTO testipsecdb.certificate_authorities (certificate) VALUES (1);
