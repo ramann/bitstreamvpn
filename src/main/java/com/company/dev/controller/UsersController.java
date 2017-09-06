@@ -22,11 +22,10 @@ import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bitcoinj.core.*;
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.ASN1SequenceParser;
-import org.bouncycastle.asn1.ASN1String;
+//import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
+import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -47,6 +46,8 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -62,7 +63,9 @@ import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import javax.xml.bind.DatatypeConverter;
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
@@ -71,30 +74,107 @@ import java.sql.Timestamp;
 import java.util.*;
 
 import static com.company.dev.util.Util.*;
+import static com.company.dev.util.Util.getPrivateKey;
 import static java.lang.System.out;
 
 @Controller
 @Validated
 public class UsersController {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @RequestMapping(method=RequestMethod.GET, value="/revoke")
-    public String revokeCert(Model model, Principal principal, String serial, boolean authError) {
-        System.out.println("authError: "+authError);
-        if(authError) {
-            model.addAttribute("password_error", "Your password was wrong. Try again.");
+    @RequestMapping(method=RequestMethod.POST, value="/deleteCert")
+    public String postDeleteCert(Model model, Principal principal, String serial, String password, HttpSession session) {
+        Security.addProvider(new BouncyCastleProvider());
+
+        if(usersDao.findByUsername(principal.getName()) != null) {
+            logger.debug("password: "+password);
+            Users user = usersDao.findByUsername(principal.getName());
+            String hashedPassword = Util.getHashedPassword(password, user.getSalt());
+
+            if ( !hashedPassword.equals(user.getPassword())) {
+                logger.warn("invalid password when trying to delete cert");
+                session.setAttribute("invalidPassword",true);
+                //model.addAttribute("invalidPassword",true);
+                return "redirect:/deleteCert?serial="+serial;
+            } else {
+                logger.debug("password was good");
+            }
+        } else {
+            hashPass(password);
+            System.out.println("User not found");
+            return null;
         }
-        model.addAttribute("username", principal.getName());
-        long certSerial = Long.valueOf(serial);
-        Certificate certificate = certificateDao.findBySerial(certSerial);
-        //certificate.setCertText(prettyPrintCert(certificate.getCertText()));
+
+        try {
+            /*X509v2CRLBuilder crlGen = new X509v2CRLBuilder(new X500Name("C=US, O=test, CN=testCA"),
+                    new Date(System.currentTimeMillis()));
+            crlGen.addCRLEntry(BigInteger.valueOf(Long.valueOf(serial)), new Date(System.currentTimeMillis()), reason);
+            crlGen.setNextUpdate(new Date(System.currentTimeMillis() + (1 * 86400000L)));
+
+            AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA512WithRSAEncryption");
+            AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+            BcContentSignerBuilder bcContentSignerBuilder = new BcRSAContentSignerBuilder(sigAlgId, digAlgId);
+
+            System.out.println("we are going to try to sign...");
+            ContentSigner signer = bcContentSignerBuilder.build(PrivateKeyFactory.createKey(getPrivateKey().getEncoded()));
+            X509CRLHolder x509CRLHolder =  crlGen.build(signer); */
+
+            Certificate cert = certificateDao.findBySerial(Long.valueOf(serial));
+            PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(cert.getCertText())));
+            PemObject pemObjectCert = pemReaderCert.readPemObject();
+            X509CertificateHolder x509CertificateHolder = new X509CertificateHolder(pemObjectCert.getContent());
+            X509Certificate x509Certificate =  new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate( x509CertificateHolder );
+            logger.info("did we delete? "+deleteIpsecRecordsForClient(x509Certificate));
+            certificateDao.delete(cert);
+            System.out.println("we've deleted...");
+            //System.out.println(prettyPrintCrl(Base64.encodeBase64String(x509CRLHolder.getEncoded())));
+            model.addAttribute("revoked", "cert "+serial+" has been deleted.");
+        } catch (Exception e) {
+            System.out.println("something bad happened in crl");
+            System.out.println(e);
+            return "error deleting cert";
+        }
+        session.setAttribute("certDeleted",true);
+        return "redirect:/myaccount";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value="/deleteCert")
+    public String deleteCert(Model model, Principal principal, String serial, HttpSession session){
+        Certificate certificate = certificateDao.findBySerial(Long.valueOf(serial));
         X509CertificateHolder cert = null;
         try {
             PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(certificate.getCertText())));
             PemObject pemObjectCert = pemReaderCert.readPemObject();
             cert = new X509CertificateHolder(pemObjectCert.getContent());
         } catch (Exception e) {
-            System.out.println("exception ");
+            logger.error("exception "+e);
         }
+        model.addAttribute("invalidPassword", (session.getAttribute("invalidPassword")));
+        model.addAttribute("username", principal.getName());
+        model.addAttribute("certInfo", printBasicCertInfo(cert));
+        model.addAttribute("certificate", certificate);
+        session.removeAttribute("invalidPassword");
+        return "deleteCert";
+    }
+
+/*
+    @RequestMapping(method=RequestMethod.GET, value="/revoke")
+    public String revokeCert(Model model, Principal principal, String serial, boolean authError) {
+        if(authError) {
+            model.addAttribute("password_error", "Your password was wrong. Try again.");
+            logger.warn("authError: "+authError);
+        }
+        long certSerial = Long.valueOf(serial);
+        Certificate certificate = certificateDao.findBySerial(certSerial);
+        X509CertificateHolder cert = null;
+        try {
+            PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(certificate.getCertText())));
+            PemObject pemObjectCert = pemReaderCert.readPemObject();
+            cert = new X509CertificateHolder(pemObjectCert.getContent());
+        } catch (Exception e) {
+            logger.error("exception "+e);
+        }
+        model.addAttribute("username", principal.getName());
         model.addAttribute("certInfo", printBasicCertInfo(cert));
         model.addAttribute("certificate", certificate);
         return "revoke";
@@ -103,55 +183,37 @@ public class UsersController {
 
     @RequestMapping(method=RequestMethod.POST, value="/revoke")
     public String postRevokeCert(Model model, Principal principal, String serial, String password, int reason) {
-
         Security.addProvider(new BouncyCastleProvider());
 
-        try {
-            System.out.println("password: "+password);
+        if(usersDao.findByUsername(principal.getName()) != null) {
+            logger.debug("password: "+password);
             Users user = usersDao.findByUsername(principal.getName());
             String hashedPassword = Util.getHashedPassword(password, user.getSalt());
 
             if ( !hashedPassword.equals(user.getPassword())) {
-                System.out.println("invalid login");
-                //model.addAttribute("password_error", "Your password was wrong. Try again.");
-                //model.addAttribute("serial", serial);
+                logger.warn("invalid password when trying to revoke cert");
                 return "redirect:/revoke?serial="+serial+"&authError=true";
             } else {
-                System.out.println("password was good");
+                logger.debug("password was good");
             }
-        } catch (Exception ex) {
-            SecureRandom random = new SecureRandom();
-            byte slt[] = new byte[8];
-            random.nextBytes(slt);
-            Util.getHashedPassword(password, Base64.encodeBase64String(slt));
-
+        } else {
+            hashPass(password);
             System.out.println("User not found");
             return null;
         }
 
         try {
-            BigInteger certSerial = BigInteger.valueOf(Long.valueOf(serial));
-
-            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
-
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(is, "changeit".toCharArray());
-            String alias = "javaalias";
-
-            PrivateKey caKey = (PrivateKey) keyStore.getKey(alias, "changeit".toCharArray());
-
             X509v2CRLBuilder crlGen = new X509v2CRLBuilder(new X500Name("C=US, O=test, CN=testCA"),
                     new Date(System.currentTimeMillis()));
-            crlGen.addCRLEntry(certSerial, new Date(System.currentTimeMillis()), reason);
+            crlGen.addCRLEntry(BigInteger.valueOf(Long.valueOf(serial)), new Date(System.currentTimeMillis()), reason);
             crlGen.setNextUpdate(new Date(System.currentTimeMillis() + (1 * 86400000L)));
-            AsymmetricKeyParameter privateKeyAsymKeyParam = PrivateKeyFactory.createKey(caKey.getEncoded());
 
             AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA512WithRSAEncryption");
             AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
             BcContentSignerBuilder bcContentSignerBuilder = new BcRSAContentSignerBuilder(sigAlgId, digAlgId);
 
             System.out.println("we are going to try to sign...");
-            ContentSigner signer = bcContentSignerBuilder.build(privateKeyAsymKeyParam);
+            ContentSigner signer = bcContentSignerBuilder.build(PrivateKeyFactory.createKey(getPrivateKey().getEncoded()));
             X509CRLHolder x509CRLHolder =  crlGen.build(signer);
             Certificate cert = certificateDao.findBySerial(Long.valueOf(serial));
             cert.setRevoked(true);
@@ -165,14 +227,12 @@ public class UsersController {
         }
         return "revoked";
     }
+*/
 
     @RequestMapping(method=RequestMethod.GET, value="/certs")
-    public String csr(Model model, Principal principal, String purchaseId) {
+    public String csr(Model model, Principal principal) {
 
-        int purchaseInt = Integer.valueOf(purchaseId);
-        Purchase purchase = purchaseDao.findById(purchaseInt);
-
-        List<Certificate> certificates = certificateDao.findByPurchase(purchase);
+/*        List<Certificate> certificates = certificateDao.findByUsers(new Users(principal.getName()));
         for(Certificate c:certificates) {
             try {
                 PemReader pemReaderCsr = new PemReader(new StringReader(prettyPrintCsr(c.getCsrText())));
@@ -189,12 +249,12 @@ public class UsersController {
                         "expires on "+dateToGMT(cert.getNotAfter())); // TODO display time in GMT
                 System.out.println("c:"+c.getCertText());
             } catch (Exception e) {
-
+                logger.error("Error reading pem of CSR or cert");
+                logger.error(e.toString());
             }
         }
         model.addAttribute("certificates", certificates);
-        model.addAttribute("certificatesSize", certificates.size());
-        model.addAttribute("purchaseId", purchaseId);
+        model.addAttribute("certificatesSize", certificates.size());*/
         model.addAttribute("username", principal.getName());
         return "certs";
     }
@@ -203,115 +263,100 @@ public class UsersController {
     // TODO scripts/id2sql "C=US, O=test, CN=peer2" also uses PRINTABLESTRING so be mindful comparing its output with Java
     // TODO should we use PRINTABLESTRING
     @RequestMapping(method=RequestMethod.POST, value="/certs")
-    public String postCSR(Model model, Principal principal, String csr, String purchaseId) {
+    public String postCSR(Model model, Principal principal, String csr, HttpSession session) {
         model.addAttribute("username", principal.getName());
-        out.println("das CSR: "+csr);
-        out.println("purchaseId: "+purchaseId);
+        logger.info("das CSR: "+csr);
+        logger.info("username: "+principal.getName());
         FileInputStream is;
         try {
-            Purchase purchase = purchaseDao.findById(Integer.valueOf(purchaseId));
-            System.out.println("found purchase!");
-            is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
-
             Security.addProvider(new BouncyCastleProvider());
-
+            logger.debug("found purchase!");
+            is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
-            String alias = "javaalias";
 
-            PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
-            X509Certificate cacert = (X509Certificate) keyStore.getCertificate("javaalias");
+            PemReader pemReaderCsr = new PemReader(new StringReader(csr));
+            PemObject pemObjectCsr = pemReaderCsr.readPemObject();
+            logger.info("the CSR: "+Base64.encodeBase64String(pemObjectCsr.getContent()));
 
-            PemReader pemReader = new PemReader(new StringReader(csr));
-            PemObject pemObject = pemReader.readPemObject();
-            System.out.println("pemObject created");
-            PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObject.getContent());
-            System.out.println("the content: "+Base64.encodeBase64String(pemObject.getContent()));
-
-                BigInteger serial;
-                serial = new BigInteger( 32, new SecureRandom() );
-
-            Certificate certificate = new Certificate(new Timestamp(new Date().getTime()), Base64.encodeBase64String(pemObject.getContent()), false, purchase, serial.longValue());
+            BigInteger serial = new BigInteger( 32, new SecureRandom() );
+            Certificate certificate = new Certificate(new Timestamp(new Date().getTime()),
+                    Base64.encodeBase64String(pemObjectCsr.getContent()), false,
+                    usersDao.findByUsername(principal.getName()), serial.longValue());
             Certificate savedCert = certificateDao.save(certificate);
-            AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find( "SHA256withRSA" );
-            AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find( sigAlgId );
-            X500Name issuer;
 
-
-            //issuer = new X500Name( "O=Company Name, OU=Signing CA, CN=website.example" );
-            System.out.println("CA name"+ cacert.getSubjectX500Principal().getName());
-            System.out.println("subject reversed: "+ Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
-            issuer = new X500Name(Util.reverseSubject(cacert.getSubjectX500Principal().getName()));
-
-
-            //serial = BigInteger.valueOf(24);
-
-            Date from;
-            from = new Date();
-            Date to;
-             to = new Date( System.currentTimeMillis() + ( 30 * 86400000L ) );
-
-            DigestCalculator digCalc = new BcDigestCalculatorProvider().get( new AlgorithmIdentifier( OIWObjectIdentifiers.idSHA1 ) );
-            X509ExtensionUtils x509ExtensionUtils = new X509ExtensionUtils( digCalc );
-            X509v3CertificateBuilder certgen;
-            certgen = new X509v3CertificateBuilder( issuer, serial, from, to, pkcs10CertificationRequest.getSubject(), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
-                //certgen = new X509v3CertificateBuilder( issuer, serial, from, to, new X500Name("O=Company Name, OU=Server1, CN=website.example"), pkcs10CertificationRequest.getSubjectPublicKeyInfo() );
-
-    /*
-            certgen.addExtension( Extension.basicConstraints, false, new BasicConstraints( false ) );
-            certgen.addExtension(Extension.keyUsage, true, new KeyUsage( KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
-            KeyPurposeId[] usages = {KeyPurposeId.id_kp_emailProtection, KeyPurposeId.id_kp_clientAuth};
-            certgen.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(usages));
-            certgen.addExtension(Extension.subjectKeyIdentifier, false, new SubjectKeyIdentifier(new DigestUtils().sha1(pkcs10CertificationRequest.getSubjectPublicKeyInfo().parsePublicKey().getEncoded())));
-    */
-
-            X509CertificateHolder caCertHolder = new X509CertificateHolder(keyStore.getCertificate("javaalias").getEncoded());
-            DigestCalculator dc = new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1));
-            AuthorityKeyIdentifier aki =  new X509ExtensionUtils(dc).createAuthorityKeyIdentifier(caCertHolder.getSubjectPublicKeyInfo());
-            certgen.addExtension(Extension.authorityKeyIdentifier, false, aki);
-
-            ContentSigner signer = new BcRSAContentSignerBuilder( sigAlgId, digAlgId ).build( PrivateKeyFactory.createKey( caKey.getEncoded() ) );
-            X509CertificateHolder holder = certgen.build(signer);
-
-            //Security.addProvider(new BouncyCastleProvider());
+            X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
+            PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
+            logger.info("CA subject:"+ subjBytesToX500Name(caCert.getSubjectX500Principal().getEncoded()).toString());
+            X509CertificateHolder holder = signCert(caCert.getSubjectX500Principal().getEncoded(),
+                    pemObjectCsr.getContent(),
+                    keyStore, caKey);
             X509Certificate x509Certificate =  new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate( holder );
-            out.println("x509certificate: "+x509Certificate.toString());
-            System.out.println("encoded: "+Base64.encodeBase64String(x509Certificate.getEncoded()));
+            logger.info("x509certificate: "+x509Certificate.toString());
+            logger.info("cert: "+prettyPrintCert(Base64.encodeBase64String(x509Certificate.getEncoded())));
 
             savedCert.setCertText(Base64.encodeBase64String(x509Certificate.getEncoded()));
             savedCert.setRevoked(false);
             certificateDao.save(savedCert);
-
-            String certNice = "";
-            BASE64Encoder encoder = new BASE64Encoder();
-            certNice += X509Factory.BEGIN_CERT+"\n";
-            OutputStream os = new ByteArrayOutputStream();
-            encoder.encodeBuffer(x509Certificate.getEncoded(), os);
-            certNice += os.toString();
-            certNice += X509Factory.END_CERT;
-            System.out.println("cert: "+certNice);
-            prettyPrintCert(Base64.encodeBase64String(x509Certificate.getEncoded()));
-
-            System.out.println("getName: "+reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
+            logger.info("getName: "+reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
 
             insertIpsecRecordsForClient(x509Certificate);
-
-
-
         } catch (Exception e) {
             out.println("Exception: "+e);
             return "Arghh!";
         }
+        session.setAttribute("certAdded", true);
+        return "redirect:/myaccount"; //?purchaseId="+purchaseId;
+    }
 
-        return "redirect:/certs?purchaseId="+purchaseId;
+    private String deleteIpsecRecordsForClient(X509Certificate x509Certificate) {
+        logger.warn("entered deleteIpsecRecordsForClient");
+        String ret = "starting";
+        X500Name x500name = subjBytesToX500Name(x509Certificate.getSubjectX500Principal().getEncoded());
+        try {
+            Identities identitiesSubject = identitiesDao.findByData(x500name.getEncoded());
+            Certificates certificates = certificatesDao.findByData(x509Certificate.getEncoded());
+            logger.warn("identity id: "+identitiesSubject.getId());
+            logger.warn("certificates id: "+certificates.getId());
+
+            /* todo: why doesn't this work?
+             * certificateIdentityDao.findByCertificateAndIdentity(identitiesSubject.getId(), certificates.getId());
+             */
+            CertificateIdentity ci = certificateIdentityDao.findByCertificate(certificates.getId());
+            logger.warn("ci: "+ci.getCertificate()+", "+ci.getIdentity());
+            certificateIdentityDao.delete(ci);
+            PeerConfigs peerConfigs = peerConfigsDao.findByRemoteId(Integer.toString(identitiesSubject.getId()));
+            PeerConfigChildConfig peerConfigChildConfig = peerConfigChildConfigDao.findByPeerCfg(peerConfigs.getId());
+
+            ChildConfigs childConfigs = childConfigsDao.findById(peerConfigChildConfig.getChildCfg());
+            List<ChildConfigTrafficSelector> childConfigTrafficSelectors = childConfigTrafficSelectorDao.findByChildCfg(childConfigs.getId());
+
+            for (ChildConfigTrafficSelector c : childConfigTrafficSelectors) {
+                trafficSelectorsDao.delete(trafficSelectorsDao.findById(c.getTrafficSelector()));
+                childConfigTrafficSelectorDao.delete(c);
+            }
+            childConfigsDao.delete(childConfigs);
+            peerConfigChildConfigDao.delete(peerConfigChildConfig);
+            ikeConfigsDao.delete(ikeConfigsDao.findById(peerConfigs.getIkeCfg()));
+            peerConfigsDao.delete(peerConfigs);
+            certificatesDao.delete(certificates);
+            identitiesDao.delete(identitiesSubject);
+
+            ret = "did work";
+            return ret;
+        } catch (Exception e) {
+            logger.error("didn't delete",e);
+        }
+        return "we shouldn't have gotten here";
     }
 
     private void insertIpsecRecordsForClient(X509Certificate x509Certificate) {
+        logger.debug("insertIpsecRecordsForClient");
         try {
             // using X500Name
-            X500Name x500name = new X500Name(reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
-            System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(x500name.getEncoded()));
-            System.out.println(DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
+            X500Name x500name = subjBytesToX500Name(x509Certificate.getSubjectX500Principal().getEncoded());//new X500Name(reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
+            logger.debug("cert subj: " + DatatypeConverter.printHexBinary(x500name.getEncoded())+
+                                ", cert: "+ DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
 
             Identities identities = new Identities((byte) 9, x500name.getEncoded());
             Identities savedIdentities = identitiesDao.save(identities);
@@ -324,10 +369,9 @@ public class UsersController {
 
             IkeConfigs ikeConfigs = new IkeConfigs("174.138.46.113", "0.0.0.0");
             IkeConfigs savedIkeConfigs = ikeConfigsDao.save(ikeConfigs);
-System.out.println("finished saving ikeconfig");
+
             X509Certificate serverCert = getServerCert();
-            System.out.println("getServerCert is null? "+(serverCert==null));
-            X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
+            X500Name serverX500Name = subjBytesToX500Name(serverCert.getSubjectX500Principal().getEncoded());/* new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));*/
             Identities savedServerSubjectIdentity = identitiesDao.findByData(serverX500Name.getEncoded());
 
             PeerConfigs peerConfigs = new PeerConfigs("rw",
@@ -357,24 +401,22 @@ System.out.println("finished saving ikeconfig");
                     savedTrafficSelectorRemote.getId(), (byte)3);
             ChildConfigTrafficSelector savedChildConfigTrafficSelectorRemote = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorRemote);
 
-
-
-
         } catch (Exception e) {
-            System.out.println("exception in insertIpsecRecordsForClient");
-            System.out.println(e);
+            logger.error("exception in insertIpsecRecordsForClient");
+            logger.error(e.toString());
         }
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/myaccount")
-    public String myAccount(Model model, Principal principal)
+    public String myAccount(Model model, Principal principal, HttpSession session)
     {
-        System.out.println("principal.getName:"+principal.getName());
+        logger.info("/myaccount");
         Purchase savedPendingPurchase = null;
         List<Purchase> confirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNotNull(usersDao.findByUsername(principal.getName()));
-        System.out.println("confirmedPurchases: "+confirmedPurchases.size());
         List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
-        System.out.println("unconfirmedPurchases: "+unconfirmedPurchases.size());
+        logger.info("principal.getName:"+principal.getName()+
+                ", confirmedPurchases: "+confirmedPurchases.size()+
+                ", unconfirmedPurchases: "+unconfirmedPurchases.size());
 
         if(unconfirmedPurchases.isEmpty()) {
             Address address = MyBean.kit.wallet().freshReceiveAddress();
@@ -383,19 +425,42 @@ System.out.println("finished saving ikeconfig");
         } else {
             savedPendingPurchase = unconfirmedPurchases.get(0);
             if(unconfirmedPurchases.size() > 1) {
-                System.out.println("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
+                logger.error("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
             }
         }
 
-        for (Purchase p:confirmedPurchases) {
-            System.out.println("confirmed purchases: "+p);
+        List<Certificate> certificates = certificateDao.findByUsers(new Users(principal.getName()));
+        for(Certificate c:certificates) {
+            try {
+                PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(c.getCertText())));
+                PemObject pemObjectCert = pemReaderCert.readPemObject();
+                X509CertificateHolder cert = new X509CertificateHolder(pemObjectCert.getContent());
+                c.setCertText("serial: "+cert.getSerialNumber()+"\n"+
+                        "subject: "+ cert.getSubject().toString()+"\n"+
+                        "creation date: " + dateToGMT(cert.getNotBefore())+"\n"+
+                        "expiration date: "+dateToGMT(cert.getNotAfter())); // TODO display time in GMT
+                System.out.println("c:"+c.getCertText());
+            } catch (Exception e) {
+                logger.error("Error reading pem of CSR or cert");
+                logger.error(e.toString());
+            }
         }
 
+        /**
+         * certAdded and certDeleted should really never be false - only null or true
+         */
+        model.addAttribute("certAdded",(session.getAttribute("certAdded")!=null) ? session.getAttribute("certAdded") : false);
+        model.addAttribute("certDeleted",(session.getAttribute("certDeleted")!=null) ? session.getAttribute("certDeleted") : false);
+
+        model.addAttribute("certificates", certificates);
+        model.addAttribute("certificatesSize",certificates.size());
         model.addAttribute("confirmedPurchases", confirmedPurchases);
         model.addAttribute("confirmedPurchasesSize", confirmedPurchases.size());
         model.addAttribute("pendingPurchase", savedPendingPurchase==null ? null : savedPendingPurchase.getReceivingAddress());
         model.addAttribute("username", principal.getName());
         model.addAttribute("page", "myaccount");
+        session.removeAttribute("certAdded");
+        session.removeAttribute("certDeleted");
         return "myaccount";
     }
 
@@ -454,9 +519,11 @@ System.out.println("finished saving ikeconfig");
                                                 String username,
                                     /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
                                             message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
+                               @Size(min=4, max=10, message="Password must be 4 to 10 characters")
                                             String password,
                                     /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
                                             message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
+                                    /* @Pattern(regexp="^{4,10}$", message="Password confirmation didn't match") */
                                                 String confirmPassword,
                                     /*@Pattern(regexp="^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$", message="You must enter a Bitcoin address")
                                                 String btc,*/
@@ -490,67 +557,31 @@ System.out.println("finished saving ikeconfig");
             session.setAttribute("username", username);
         }
         catch (Exception ex) {
-            out.println("Error creating the user: " + ex.toString());
+            logger.error("Error creating the user: " + ex.toString());
         }
-        out.println("User succesfully created! (id = " + user.getUsername() + ")");
+        logger.info("User succesfully created! (id = " + user.getUsername() + ")");
 
-        out.println("GOTO: accountcreated");
         return "redirect:/accountcreated";
     }
 
     @RequestMapping(method=RequestMethod.GET, value="accountcreated")
     public String accountCreated(Model model, HttpSession session) {
-        out.println("ENTERED accountcreated");
+        logger.info("/accountcreated");
         model.addAttribute("username", session.getAttribute("username"));
         session.setAttribute("username", null);
         return "accountcreated";
     }
 
-/*    @RequestMapping(method=RequestMethod.GET, value="/enterpayment")
-    public String enterPayment(Model model, Principal principal) {
-        out.println("entered EnterPayment");
-
-        List<Purchase> purchasesPending = purchaseDao.findByUsersAndDateConfirm1IsNull(new Users(principal.getName()));
-        if(purchasesPending.size() > 1) {
-            System.out.println("WARNING: THERE IS MORE THAN 1 PENDING PURCHASE FOR "+principal.getName()+".");
-        }
-
-        if(purchasesPending.size() > 0) {
-            model.addAttribute("pendingPurchase", purchasesPending.get(0));
-            model.addAttribute("payTo", purchasesPending.get(0).getReceivingAddress());
-        } else if(purchasesPending.size() == 0) {
-            Address address = MyBean.kit.wallet().freshReceiveAddress();
-            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
-            Purchase savedPendingPurchase = purchaseDao.save(newPendingPurchase);
-            out.println("/enterpayment, payTo: "+savedPendingPurchase.getReceivingAddress());
-            model.addAttribute("payTo", savedPendingPurchase.getReceivingAddress());
-        }
-
-        return "enterpayment";
-    }*/
-
     @RequestMapping(method=RequestMethod.GET, value="/qrcode")
     public void qrcode(Principal principal, HttpServletResponse response, HttpSession session) {
 
         List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
-        /*if(unconfirmedPurchases.isEmpty()) {
-            Address address = MyBean.kit.wallet().freshReceiveAddress();
-            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
-            savedPendingPurchase = purchaseDao.save(newPendingPurchase);
-        } else {
-            savedPendingPurchase = unconfirmedPurchases.get(0);
-            if(unconfirmedPurchases.size() > 1) {
-                System.out.println("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
-            }
-        }*/
 
-        String qrCodeData = "bitcoin:"+unconfirmedPurchases.get(0).getReceivingAddress()+"?amount=0.1234";
-        //String charset="UTF-8"; // or "ISO-8859-1"
+        String qrCodeData = "bitcoin:"+unconfirmedPurchases.get(0).getReceivingAddress(); // +"?amount=0.1234";
         int qrCodeWidth = 200;
         int qrCodeHeight = 200;
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-        byte[] qrCodeDataBytes = qrCodeData.getBytes();
 
         try {
             BitMatrix matrix = new MultiFormatWriter().encode(qrCodeData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight, hintMap);
@@ -558,13 +589,19 @@ System.out.println("finished saving ikeconfig");
             MatrixToImageWriter.writeToStream(matrix, "jpg", response.getOutputStream());
             response.flushBuffer();
         } catch (Exception ex) {
-            System.out.println("Failed to write QRcode to output stream.");
+            logger.error("Failed to write QRcode to output stream.");
             throw new RuntimeException("IOError writing QRcode to output stream");
         }
     }
 
     @RequestMapping(method=RequestMethod.GET, value = "/")
     public String index(String filename, Model model) {
+        String msg = "-------------------------- TESTING LOG ENTRY --------------------------";
+        logger.error(msg);
+        logger.warn(msg);
+        logger.info(msg);
+        logger.trace(msg);
+        logger.debug(msg);
         return "index";
     }
 
@@ -585,15 +622,8 @@ System.out.println("finished saving ikeconfig");
 
     @RequestMapping("/greeting")
     public String greeting(@RequestParam(value="name", required=false, defaultValue="World") String name, Model model, HttpSession session) {
-
-        byte type = 11;
-        String data = "ce1a1c20a0b0e86104f9a0f0897e21177d92426b";
-        identitiesDao.save(new Identities(type, DatatypeConverter.parseHexBinary(data)));
         model.addAttribute("name", name);
         model.addAttribute("captchaToken", session.getAttribute("captchaToken"));
-
-
-
         return "greeting";
     }
     // ------------------------
@@ -612,38 +642,41 @@ System.out.println("finished saving ikeconfig");
 
     @RequestMapping(method=RequestMethod.GET, value = "/viewproducts")
     public String viewProducts(Model model) {
-        out.println("GET /viewproducts");
+        logger.info("GET /viewproducts");
         return "viewproducts";
     }
 
     @RequestMapping(method=RequestMethod.GET, value = "/login")
     public String login(Model model) {
-        out.println("GET /login");
+        logger.info("GET /login");
         return "login";
     }
 
     @RequestMapping(method=RequestMethod.POST, value = "/login")
     public String loginPost(String username, String password, HttpSession session, Model model) {
-        out.println("POST /login");
-        try {
-            out.println("username: "+username+", password: "+password);
+        logger.info("POST /login");
+       /* try {*/
+        if (usersDao.findByUsername(username) != null) {
+            logger.debug("username: " + username + ", password: " + password);
             Users user = usersDao.findByUsername(username);
             String hashedPassword = Util.getHashedPassword(password, user.getSalt());
 
-            if ( !hashedPassword.equals(user.getPassword())) {
-                out.println("invalid login");
+            if (!hashedPassword.equals(user.getPassword())) {
+                logger.warn("invalid login");
                 return "redirect:/login";
             }
             session.setAttribute("username", user.getUsername());
-            out.println("/login username---->"+username);
-
+            logger.info("/login username---->" + username);
+/*
         } catch (Exception ex) {
+*/
+        } else {
             SecureRandom random = new SecureRandom();
             byte slt[] = new byte[8];
             random.nextBytes(slt);
             Util.getHashedPassword(password, Base64.encodeBase64String(slt));
 
-            out.println("User not found");
+            logger.warn("User not found");
             return "redirect:/login";
         }
         return "viewproducts";
@@ -742,12 +775,7 @@ System.out.println("finished saving ikeconfig");
     public void generateCaptcha(Model model, HttpServletResponse response, HttpSession session) { //ResponseEntity<CaptchaRequestData> generateCaptcha(HttpSession session) {
         Cage currGcage = new YCage();
         String captchaToken = currGcage.getTokenGenerator().next();
-        out.println("captchaToken: "+captchaToken);
-/*
-        if (captchaToken.length() >= 7) {
-            captchaToken = captchaToken.substring(0, 7).toUpperCase();
-        }
-*/
+        logger.debug("captchaToken: "+captchaToken);
 
         //Setting the captcha token in http session
         session.setAttribute("captchaToken", captchaToken);
@@ -759,7 +787,7 @@ System.out.println("finished saving ikeconfig");
 
             response.flushBuffer();
         } catch (IOException ex) {
-            out.println("Error writing captcha to output stream.");
+            logger.error("Error writing captcha to output stream.");
             throw new RuntimeException("IOError writing file to output stream");
         }
     }

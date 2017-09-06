@@ -1,0 +1,11 @@
+alter table certificate add column serial bigint;
+
+create table certificate (
+id serial primary key not null,
+username varchar(30) not null references users,
+date_initiated timestamp not null,
+csr_text varchar(4096) not null,
+signed boolean not null,
+cert_text varchar(4096),
+revoked boolean
+);

@@ -9,17 +9,17 @@
     <form name="f" th:action="@{/createaccount}" method="post">
 
             <legend>Please Create Account</legend>
+            <p class="alert alert-danger" th:if="${username_error} != null" th:text="${username_error}"></p><br/>
             <label for="username">Username</label>
             <input type="text" id="username" name="username" th:value="${username}"/>
-            <p th:if="${username_error} != null" th:text="${username_error}"></p><br/>
 
+            <p class="alert alert-danger" th:if="${password_error} != null" th:text="${password_error}"></p><br/>
             <label for="password">Password</label>
             <input type="password" id="password" name="password"/>
-            <p th:if="${password_error} != null" th:text="${password_error}"></p><br/>
 
+            <p class="alert alert-danger" th:if="${password_confirm_error} != null" th:text="${password_confirm_error}"></p><br/>
             <label for="confirmPassword">Confirm Password</label>
             <input type="password" id="confirmPassword" name="confirmPassword"/>
-            <p th:if="${password_confirm_error} != null" th:text="${password_confirm_error}"></p><br/>
 
             <br/><label for="captcha">Enter the value shown below.</label><br/>
             <div class="alert alert-danger" th:if="${captcha_error} != null" th:text="${captcha_error}"></div>

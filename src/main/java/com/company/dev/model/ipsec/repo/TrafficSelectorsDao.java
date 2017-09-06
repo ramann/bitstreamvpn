@@ -7,4 +7,5 @@ import javax.transaction.Transactional;
 
 @Transactional
 public interface TrafficSelectorsDao  extends CrudRepository<TrafficSelectors, Long> {
+    public TrafficSelectors findById(int id);
 }

@@ -8,4 +8,5 @@ import javax.transaction.Transactional;
 @Transactional
 public interface PeerConfigsDao extends CrudRepository<PeerConfigs, Long> {
 
+    public PeerConfigs findByRemoteId(String remoteId);
 } // class UserDao

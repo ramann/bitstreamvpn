@@ -8,5 +8,6 @@ import javax.transaction.Transactional;
 @Transactional
 public interface CertificateIdentityDao extends CrudRepository<CertificateIdentity, Long> {
 
-
+    public CertificateIdentity findByCertificateAndIdentity(int certificate, int identity);
+    public CertificateIdentity findByCertificate(int certificate);
 } // class UserDao

@@ -9,4 +9,5 @@ import javax.transaction.Transactional;
 @Transactional
 public interface PeerConfigChildConfigDao extends CrudRepository<PeerConfigChildConfig, Long> {
 
+    public PeerConfigChildConfig findByPeerCfg(int peerCfg);
 } // class UserDao

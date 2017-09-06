@@ -4,9 +4,27 @@ import com.company.dev.model.ipsec.domain.Identities;
 import com.company.dev.model.ipsec.repo.IdentitiesDao;
 import com.sun.deploy.util.StringUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
+import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509ExtensionUtils;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.crypto.generators.SCrypt;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DigestCalculator;
+import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import sun.misc.BASE64Encoder;
 import sun.security.provider.X509Factory;
@@ -14,12 +32,16 @@ import sun.security.provider.X509Factory;
 import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Util {
+    private static final Logger logger = LoggerFactory.getLogger(Util.class);
 
     public static String getHashedPassword(String password, String salt) {
         long startTime = System.nanoTime();
@@ -48,7 +70,8 @@ public class Util {
     public static String printBasicCertInfo(X509CertificateHolder cert) {
         return "serial: "+cert.getSerialNumber()+"\n"+
                 "subject: "+ cert.getSubject().toString()+"\n"+
-                "expires on "+dateToGMT(cert.getNotAfter()); // TODO display time in GMT
+                "creation date: "+dateToGMT(cert.getNotBefore())+"\n"+
+                "expiration date: "+dateToGMT(cert.getNotAfter()); // TODO display time in GMT
     }
 
     public static String prettyPrintCert(String uglyCert) {
@@ -56,7 +79,7 @@ public class Util {
         BASE64Encoder encoder = new BASE64Encoder();
         certNice += X509Factory.BEGIN_CERT+"\n";
 
-        for (String s:getParts(uglyCert,76)) {
+        for (String s:getParts(uglyCert,64)) {
             certNice += s+"\n";
         }
 
@@ -70,7 +93,7 @@ public class Util {
         BASE64Encoder encoder = new BASE64Encoder();
         certNice += "-----BEGIN CERTIFICATE REQUEST-----"+"\n";
 
-        for (String s:getParts(uglyCsr,76)) {
+        for (String s:getParts(uglyCsr,64)) {
             certNice += s+"\n";
         }
 
@@ -118,4 +141,131 @@ public class Util {
         return serverCert;
     }
 
+    /* take a Subject and convert it to use PRINTABLESTRINGs and return the X500Name */
+    public static X500Name subjBytesToX500Name(byte[] subjBytes) {
+        logger.debug("entered subjBytesToX500Name with data: "+DatatypeConverter.printHexBinary(subjBytes));
+
+        ArrayList<RDN> rdns = new ArrayList<RDN>();
+
+        try {
+            ASN1Primitive caSubj = ASN1Primitive.fromByteArray(subjBytes);
+
+            if (caSubj instanceof ASN1Sequence) {
+                logger.debug("caSubj is ASN1Sequence!!!");
+                //org.bouncycastle.asn1.DLSequence;
+                ASN1Sequence a = (DLSequence) caSubj;
+                logger.debug("a: " + a.size());
+                //ASN1ObjectIdentifier b = new ASN1ObjectIdentifier("2.5.4.6");
+                //ASN1Encodable[] e = a.toArray();
+
+                for (ASN1Encodable ee : a.toArray()) {
+                    ASN1ObjectIdentifier oid = null;
+                    ASN1Encodable ae = null;
+                    logger.debug("looping through sequence");
+                    if (ee instanceof ASN1Set) {
+                        ASN1Set set = (ASN1Set) ee;
+                        for (ASN1Encodable eee : set.toArray()) {
+                            logger.debug("looping through set");
+                            if (eee instanceof ASN1Sequence) {
+
+                                for (ASN1Encodable eeee : ((ASN1Sequence) eee).toArray()) {
+                                    logger.debug("looping through inner sequence");
+                                    logger.debug(eeee.getClass().toString());
+                                    if (eeee instanceof ASN1ObjectIdentifier) {
+                                        logger.debug("oid: ");
+                                        ASN1ObjectIdentifier x = (ASN1ObjectIdentifier) eeee;
+                                        logger.debug(" id: " + x.getId());
+                                        oid = x;
+                                    }
+
+                                    if (eeee instanceof DERPrintableString) {
+                                        DERPrintableString xx = (DERPrintableString) eeee;
+                                        logger.debug(" printablestring: " + xx.getString());
+                                        ae = eeee;
+                                    }
+
+                                    if (eeee instanceof DERUTF8String) {
+                                        DERUTF8String xx = (DERUTF8String) eeee;
+                                        logger.debug("utf8string: "+xx.getString());
+                                        ae = new DERPrintableString(xx.getString());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    RDN r = new RDN(oid, ae);
+                    logger.debug("r: "+DatatypeConverter.printHexBinary(r.getEncoded()));
+                    rdns.add(r);
+                    logger.debug("rdns: "+rdns.size());
+                }
+            }
+            return new X500Name(rdns.toArray(new RDN[0]));
+        } catch (Exception e) {
+            logger.debug("Couldn't parse subjBytes");
+        }
+        return null;
+    }
+
+    public static X509CertificateHolder signCert(byte[] subj, byte[] csr, KeyStore keyStore, PrivateKey caKey) {
+        X509CertificateHolder holder = null;
+        try {
+            PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(csr);
+
+
+            BigInteger serial = new BigInteger(32, new SecureRandom());
+
+            X500Name issuer = subjBytesToX500Name(subj /*caCert.getSubjectX500Principal().getEncoded()*/);
+
+            Date from = new Date();
+            Date to = new Date(System.currentTimeMillis() + (30 * 86400000L));
+
+            X509v3CertificateBuilder certgen = new X509v3CertificateBuilder(issuer, serial, from, to,
+                    subjBytesToX500Name(pkcs10CertificationRequest.getSubject().getEncoded()),
+                    pkcs10CertificationRequest.getSubjectPublicKeyInfo());
+
+
+    /*        certgen.addExtension( Extension.basicConstraints, false, new BasicConstraints( false ) );
+            certgen.addExtension(Extension.keyUsage, true, new KeyUsage( KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+            KeyPurposeId[] usages = {KeyPurposeId.id_kp_emailProtection, KeyPurposeId.id_kp_clientAuth};
+            certgen.addExtension(Extension.extendedKeyUsage, false, new ExtendedKeyUsage(usages));
+            certgen.addExtension(Extension.subjectKeyIdentifier, false, new SubjectKeyIdentifier(new DigestUtils().sha1(pkcs10CertificationRequest.getSubjectPublicKeyInfo().parsePublicKey().getEncoded())));
+    */
+
+            X509CertificateHolder caCertHolder = new X509CertificateHolder(keyStore.getCertificate("javaalias").getEncoded());
+            DigestCalculator dc = new BcDigestCalculatorProvider().get(new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1));
+            AuthorityKeyIdentifier aki = new X509ExtensionUtils(dc).createAuthorityKeyIdentifier(caCertHolder.getSubjectPublicKeyInfo());
+            certgen.addExtension(Extension.authorityKeyIdentifier, false, aki);
+
+            AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256withRSA");
+            AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+            ContentSigner signer = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(PrivateKeyFactory.createKey(caKey.getEncoded()));
+             holder = certgen.build(signer);
+        } catch (Exception e) {
+
+        }
+        return holder;
+    }
+
+    public static PrivateKey getPrivateKey() {
+        PrivateKey caKey = null;
+        try {
+            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(is, "changeit".toCharArray());
+            String alias = "javaalias";
+
+            caKey = (PrivateKey) keyStore.getKey(alias, "changeit".toCharArray());
+        } catch (Exception e) {
+
+        }
+        return caKey;
+    }
+
+    public static void hashPass(String password) {
+        SecureRandom random = new SecureRandom();
+        byte slt[] = new byte[8];
+        random.nextBytes(slt);
+        Util.getHashedPassword(password, Base64.encodeBase64String(slt));
+    }
 }

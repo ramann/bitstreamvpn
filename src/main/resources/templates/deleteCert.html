@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
+<body>
+<header th:replace="layout :: header">
+</header>
+
+<div class="container" th:fragment="content">
+    <div class="alert alert-danger" th:if="${invalidPassword} != null">You entered an <strong>invalid password</strong> when trying to delete.</div>
+
+    <div th:if="${username == null}">
+        <div>What are you doing here? This is for cert deletions only.</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi ' + ${username} + '. You must be here to delete a cert.'">Hi, username</div>
+        <pre th:text="${certInfo}">certificate text</pre>
+    </div>
+
+    <form name="f" th:action="@{/deleteCert}" method="post">
+        <fieldset>
+            <label for="password">Please confirm your password</label>
+            <input type="password" id="password" name="password"/><br/>
+<!--            <label>Select a revocation reason:</label>
+            <input type="radio" name="reason" value="1">Key Compromise</input>
+            <input type="radio" name="reason" value="5">Cessation of Operation</input>
+            <input type="radio" name="reason" value="0">Unspecified</input>
+            <p th:if="${reason_error} != null" th:text="${reason_error}">reason error</p><br/>-->
+            <input type="hidden" name="serial" th:value="${certificate.serial}"/>
+        </fieldset>
+
+<!--        <fieldset>
+            <legend>CAPTCHA</legend>
+            <img th:src="@{/generatecaptcha}"/>
+            <label for="captcha">Captcha:</label>
+            <input type="text" id="captcha" name="captcha"/>
+            <p th:if="${captcha_error} != null" th:text="${captcha_error}"></p><br/><br/><br/>
+        </fieldset>-->
+        <div class="form-actions">
+            <button type="submit" class="btn">Delete</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

@@ -10,30 +10,30 @@
         <div>What are you doing here?</div>
     </div>
     <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + 'here are the certs for your purchase.'">Hi, username</div>
+        <div th:text=" 'Hi,' + ${username} + ' here are the certs for your purchase.'">Hi, username</div>
 
     </div>
 
-    <div th:if="${certificatesSize == 0}">You haven't submitted a CSR yet.</div>
+<!--    <div th:if="${certificatesSize == 0}">You have no certificates associated with this purchase.</div>
     <table th:unless="${certificatesSize == 0}" th:classappend="table">
         <tr>
-            <!--<th>ID</th>-->
+            &lt;!&ndash;<th>ID</th>&ndash;&gt;
             <th>Date Initiated</th>
             <th>CSR</th>
             <th>Certificate</th>
             <th>Revoke?</th>
         </tr>
         <tr th:each="certificate : ${certificates}">
-<!--
+&lt;!&ndash;
             <td th:text="${certificate.id}"></td>
--->
+&ndash;&gt;
             <td th:text="${certificate.dateInitiated}"></td>
             <td><pre th:text="${certificate.csrText}"></pre></td>
             <td><pre th:text="${certificate.certText}">certificate text</pre></td>
             <td th:if="${certificate.revoked}">REVOKED!</td>
-            <td th:unless="${certificate.revoked}"><a th:href="'/revoke?serial='+${certificate.serial}">revoke</a></td>
+            <td th:unless="${certificate.revoked}"><a th:href="'/deleteCert?serial='+${certificate.serial}">revoke</a></td>
         </tr>
-    </table>
+    </table>-->
 
     <form name="f" th:action="@{/certs}" method="post">
         <div>Paste in a PEM-formatted CSR.</div>

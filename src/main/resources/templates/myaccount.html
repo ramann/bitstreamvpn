@@ -6,51 +6,66 @@
 </header>
 
 <div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <div>What are you doing here?</div>
-    </div>
-    <div th:unless="${username == null}">
-        <div th:text="'Hi ' + ${username} + ', Welcome to your account.'">Hi, username</div>
-    </div>
+    <div th:if="${certAdded}" class="alert alert-success">You've <strong>added</strong> a certificate.</div>
+    <div th:if="${certDeleted}" class="alert alert-success">You've <strong>deleted</strong> a certificate.</div>
+    <h3 th:if="${username == null}">What are you doing here?</h3>
+    <h3 th:unless="${username == null}" th:text="'Hi ' + ${username} + ', Welcome to your account.'">Hi, username</h3>
     <div th:if="${pendingPurchase != null}">Before you can proceed, you'll need to send payment to the below address. You'll be able to submit a CSR after it has confirmed.</div><br/>
-    <div th:if="${pendingPurchase != null}" th:text="${pendingPurchase}"></div>
+    <div th:if="${pendingPurchase != null}" th:text="'bitcoin:'+${pendingPurchase}"></div>
     <img th:src="@{/qrcode}"/><br/>
     <div th:if="${confirmedPurchasesSize > 0}">
-        <div>Payment History</div>
-<!--        <div class="row">
-            <div class="col-sm-2">ID</div>
-            <div class="col-sm-2">Date Initiated</div>
-            <div class="col-sm-2">Receiving Address</div>
-            <div class="col-sm-2">Amount</div>
-            <div class="col-sm-2">Time of 1st Confirmation</div>
-            <div class="col-sm-2">Certificates</div>
-        </div>
-        <div class="row" th:each="purchase : ${purchases}">
-            <div class="col-sm-2" th:text="${purchase.id}"></div>
-            <div class="col-sm-2" th:text="${purchase.dateInitiated}"></div>
-            <div class="col-sm-2" th:text="${purchase.receivingAddress}"></div>
-            <div th:if="${purchase.dateConfirm1 == null}" class="col-sm-6 alert alert-warning">Unconfirmed payment!</div>
-            <div th:unless="${purchase.dateConfirm1 == null}" class="col-sm-2" th:text="${purchase.amount}"></div>
-            <div th:unless="${purchase.dateConfirm1 == null}" class="col-sm-2" th:text="${purchase.dateConfirm1}"></div>
-            <div th:unless="${purchase.dateConfirm1 == null}" class="col-sm-2"><a th:href="'/csr?purchaseId=' + ${purchase.id}">cert</a></div>
-        </div>-->
+        <h3>Payment History</h3>
         <table th:classappend="table">
             <tr>
                 <!--<th>ID</th>-->
-                <th>Date Initiated</th>
+                <!--<th>Date Initiated</th> -->
                 <th>Receiving address</th>
                 <th>Amount</th>
                 <th>Time of 1st Confirmation</th>
+<!--
                 <th>Certs</th>
+-->
             </tr>
             <tr th:each="purchase : ${confirmedPurchases}">
                 <!--<td th:text="${purchase.id}"></td>-->
-                <td th:text="${purchase.dateInitiated}"></td>
+                <!-- <td th:text="${purchase.dateInitiated}"></td> -->
                 <td th:text="${purchase.receivingAddress}"></td>
                 <td th:if="${purchase.dateConfirm1 != null}" th:text="${purchase.amount}">amount</td>
                 <td th:if="${purchase.dateConfirm1 != null}" th:text="${purchase.dateConfirm1}">1st confirmation</td>
+<!--
                 <td th:if="${purchase.dateConfirm1 != null}"><a th:href="'/certs?purchaseId=' + ${purchase.id}">certs</a></td>
+-->
                 <td class="alert alert-warning" th:unless="${purchase.dateConfirm1 != null}" th:colspan="3"><a th:href="@{/enterpayment}">Awaiting Confirmation</a></td>
+            </tr>
+        </table>
+
+        <h3>Certificates</h3>
+        <div th:if="${certificatesSize == 0}">You don't have any certificates yet.</div>
+        <a href="/certs">add a certificate</a>
+        <table th:unless="${certificatesSize == 0}" th:classappend="table">
+            <tr>
+                <!--<th>ID</th>-->
+    <!--
+                <th>Date Initiated</th>
+    -->
+    <!--
+                <th>CSR</th>
+    -->
+                <th>Certificate</th>
+                <th>Delete?</th>
+            </tr>
+            <tr th:each="certificate : ${certificates}">
+    <!--
+                <td th:text="${certificate.id}"></td>
+    -->
+    <!--
+                <td th:text="${certificate.dateInitiated}"></td>
+    -->
+    <!--
+                <td><pre th:text="${certificate.csrText}"></pre></td>
+    -->
+                <td><pre th:text="${certificate.certText}">certificate text</pre></td>
+                <td><a th:href="'/deleteCert?serial='+${certificate.serial}">delete</a></td>
             </tr>
         </table>
     </div>

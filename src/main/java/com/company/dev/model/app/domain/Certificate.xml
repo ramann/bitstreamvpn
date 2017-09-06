@@ -8,8 +8,8 @@
             <id name="id">
                 <column name="id" precision="-1"/>
             </id>
-            <many-to-one name="purchase" fetch="LAZY">
-                <join-column name="purchase_id"/>
+            <many-to-one name="users" fetch="LAZY">
+                <join-column name="username"/>
             </many-to-one>
             <basic name="dateInitiated">
                 <column name="date_initiated" precision="-1"/>

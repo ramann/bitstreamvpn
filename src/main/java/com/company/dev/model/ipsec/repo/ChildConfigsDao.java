@@ -9,4 +9,5 @@ import javax.transaction.Transactional;
 @Transactional
 public interface ChildConfigsDao extends CrudRepository<ChildConfigs, Long> {
 
+    ChildConfigs findById(int id);
 } // class UserDao

@@ -7,5 +7,5 @@ import javax.transaction.Transactional;
 
 @Transactional
 public interface IkeConfigsDao extends CrudRepository<IkeConfigs, Long> {
-
+    public IkeConfigs findById(int id);
 } // class UserDao

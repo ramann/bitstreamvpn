@@ -16,11 +16,16 @@ import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.RSAPublicKey;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.RFC4519Style;
 import org.bouncycastle.asn1.x509.Extension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.*;
 import org.springframework.stereotype.*;
 
+import javax.security.auth.x500.X500Principal;
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -95,10 +100,32 @@ public class MyBean implements CommandLineRunner {
             certificateAuthoritiesDao.save(certificateAuthorities);
 
             /* Insert CA identity (subject ASN.1 string) */
-            X500Name x500name = new X500Name(reverseSubject(caCert.getSubjectX500Principal().getName()));
-            System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(x500name.getEncoded()));
+
+            //X500Name x500name = new X500Name(reverseSubject(caCert.getSubjectX500Principal().getName(X500Principal.RFC1779)));
+            //ASN1Primitive asn1X500Name = ASN1Primitive.fromByteArray(x500name.getEncoded());
+            ASN1Primitive asn1X500Name = ASN1Primitive.fromByteArray(caCert.getSubjectX500Principal().getEncoded());
+            for (ASN1Encodable e : ASN1Sequence.getInstance(asn1X500Name)) {
+                if(e instanceof ASN1Set) {
+                    System.out.println("is set "+DatatypeConverter.printHexBinary(((ASN1Set) e).getEncoded()));
+                    for (ASN1Encodable ee : ASN1Set.getInstance(e).toArray()) {
+                        if(ee instanceof ASN1Sequence) {
+                            System.out.println("is sequence:"+ DatatypeConverter.printHexBinary(((ASN1Sequence) ee).getEncoded()));
+                            for (ASN1Encodable eee : ASN1Sequence.getInstance(ee).toArray()) {
+
+                                if (eee instanceof DERUTF8String) {
+                                    System.out.println("is utf8string " + DatatypeConverter.printHexBinary(((DERUTF8String) eee).getEncoded()));
+
+                                } else if (eee instanceof DERPrintableString) {
+                                    System.out.println("is printablestring " + DatatypeConverter.printHexBinary (((DERPrintableString) eee).getEncoded()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            System.out.println("getName ca encoded: " + DatatypeConverter.printHexBinary(caCert.getSubjectX500Principal().getEncoded()));
             System.out.println(DatatypeConverter.printHexBinary(caCert.getEncoded()));
-            Identities caSubjectIdentity = new Identities((byte) 9, x500name.getEncoded());
+            Identities caSubjectIdentity = new Identities((byte) 9, caCert.getSubjectX500Principal().getEncoded());
             Identities savedCaSubjectIdentity = identitiesDao.save(caSubjectIdentity);
 
             /* Insert CA identity (pub key id) */
@@ -144,10 +171,10 @@ public class MyBean implements CommandLineRunner {
 
 
             /* Insert Server identity (subject ASN.1 string) */
-            X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
-            System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(serverX500Name.getEncoded()));
+            //X500Name serverX500Name = new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));
+            System.out.println("getName encoded: " + DatatypeConverter.printHexBinary(serverCert.getSubjectX500Principal().getEncoded()));
             System.out.println(DatatypeConverter.printHexBinary(serverCert.getEncoded()));
-            Identities serverSubjectIdentity = new Identities((byte) 9, serverX500Name.getEncoded());
+            Identities serverSubjectIdentity = new Identities((byte) 9, serverCert.getSubjectX500Principal().getEncoded());
             Identities savedServerSubjectIdentity = identitiesDao.save(serverSubjectIdentity);
 
             /* Insert Server identity (pub key id) */

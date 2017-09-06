@@ -2,6 +2,7 @@ package com.company.dev.model.app.repo;
 
 import com.company.dev.model.app.domain.Certificate;
 import com.company.dev.model.app.domain.Purchase;
+import com.company.dev.model.app.domain.Users;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
@@ -20,12 +21,7 @@ import java.util.List;
 @Transactional
 public interface CertificateDao extends CrudRepository<Certificate, Long> {
 
-    /**
-     * Return the user having the passed email or null if no user is found.
-     *
-     * @param purchase the user name.
-     */
-    public List<Certificate> findByPurchase(Purchase purchase);
+    public List<Certificate> findByUsers(Users users);
     public Certificate findById(int certificateId);
     public Certificate findBySerial(long serial);
 

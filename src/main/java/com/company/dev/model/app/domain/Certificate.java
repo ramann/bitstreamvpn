@@ -11,25 +11,25 @@ public class Certificate {
     private boolean signed;
     private String certText;
     private Boolean revoked;
-    private Purchase purchase;
+    private Users users;
     private Long serial;
 
 
     public Certificate() {}
 
-    public Certificate(Timestamp dateInitiated, String csrText, boolean signed, Purchase purchase, Long serial) {
+    public Certificate(Timestamp dateInitiated, String csrText, boolean signed, Users users, Long serial) {
         this.dateInitiated = dateInitiated;
         this.csrText = csrText;
         this.signed = signed;
-        this.purchase = purchase;
+        this.users = users;
         this.serial = serial;
     }
 
     @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="purchase_id")
-    public Purchase getPurchase() { return purchase; }
+    @JoinColumn(name="username")
+    public Users getUsers() { return users; }
 
-    public void setPurchase(Purchase purchase) { this.purchase = purchase; }
+    public void setUsers(Users users) { this.users = users; }
 
     @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="certificate_id_seq", name="certificate_id_seq")
     @GeneratedValue(generator="certificate_id_seq", strategy=GenerationType.SEQUENCE)
