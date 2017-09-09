@@ -1,11 +1,14 @@
 package com.company.dev.model.app.domain;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Entity
-public class Purchase {
+public class Payment {
     private int id;
     private Timestamp dateInitiated;
     private BigDecimal amount;
@@ -13,32 +16,9 @@ public class Purchase {
     private Timestamp dateConfirm1;
     private Timestamp dateConfirm3;
     private Timestamp dateConfirm6;
-    private Users users;
 
-    public Purchase() {
-    }
-
-    public Purchase(Timestamp dateInitiated, /*BigDecimal amount,*/ String receivingAddress, Users users) {
-        this.dateInitiated = dateInitiated;
-    //    this.amount = amount;
-        this.receivingAddress = receivingAddress;
-        this.users = users;
-    }
-
-    @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="username")
-    public Users getUsers() { return users; }
-
-    public void setUsers(Users users) { this.users = users; }
-
-/*    @Id
-    @Column(name = "id", nullable = false, columnDefinition = "serial")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)*/
-
-    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="product_product_id_seq", name="product_product_id_seq")
-    @GeneratedValue(generator="product_product_id_seq", strategy=GenerationType.SEQUENCE)
     @Id
-    @Column(name="id")
+    @Column(name = "id", nullable = false)
     public int getId() {
         return id;
     }
@@ -78,7 +58,7 @@ public class Purchase {
     }
 
     @Basic
-    @Column(name = "date_confirm_1", nullable = false)
+    @Column(name = "date_confirm_1", nullable = true)
     public Timestamp getDateConfirm1() {
         return dateConfirm1;
     }
@@ -88,7 +68,7 @@ public class Purchase {
     }
 
     @Basic
-    @Column(name = "date_confirm_3", nullable = false)
+    @Column(name = "date_confirm_3", nullable = true)
     public Timestamp getDateConfirm3() {
         return dateConfirm3;
     }
@@ -98,7 +78,7 @@ public class Purchase {
     }
 
     @Basic
-    @Column(name = "date_confirm_6", nullable = false)
+    @Column(name = "date_confirm_6", nullable = true)
     public Timestamp getDateConfirm6() {
         return dateConfirm6;
     }
@@ -112,36 +92,22 @@ public class Purchase {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Purchase purchase = (Purchase) o;
+        Payment payment = (Payment) o;
 
-        if (id != purchase.id) return false;
-        if (dateInitiated != null ? !dateInitiated.equals(purchase.dateInitiated) : purchase.dateInitiated != null)
+        if (id != payment.id) return false;
+        if (dateInitiated != null ? !dateInitiated.equals(payment.dateInitiated) : payment.dateInitiated != null)
             return false;
-        if (amount != null ? !amount.equals(purchase.amount) : purchase.amount != null) return false;
-        if (receivingAddress != null ? !receivingAddress.equals(purchase.receivingAddress) : purchase.receivingAddress != null)
+        if (amount != null ? !amount.equals(payment.amount) : payment.amount != null) return false;
+        if (receivingAddress != null ? !receivingAddress.equals(payment.receivingAddress) : payment.receivingAddress != null)
             return false;
-        if (dateConfirm1 != null ? !dateConfirm1.equals(purchase.dateConfirm1) : purchase.dateConfirm1 != null)
+        if (dateConfirm1 != null ? !dateConfirm1.equals(payment.dateConfirm1) : payment.dateConfirm1 != null)
             return false;
-        if (dateConfirm3 != null ? !dateConfirm3.equals(purchase.dateConfirm3) : purchase.dateConfirm3 != null)
+        if (dateConfirm3 != null ? !dateConfirm3.equals(payment.dateConfirm3) : payment.dateConfirm3 != null)
             return false;
-        if (dateConfirm6 != null ? !dateConfirm6.equals(purchase.dateConfirm6) : purchase.dateConfirm6 != null)
+        if (dateConfirm6 != null ? !dateConfirm6.equals(payment.dateConfirm6) : payment.dateConfirm6 != null)
             return false;
 
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return "Purchase{" +
-                "id=" + id +
-                ", dateInitiated=" + dateInitiated +
-                ", amount=" + amount +
-                ", receivingAddress='" + receivingAddress + '\'' +
-                ", dateConfirm1=" + dateConfirm1 +
-                ", dateConfirm3=" + dateConfirm3 +
-                ", dateConfirm6=" + dateConfirm6 +
-                ", users=" + users.getUsername() +
-                '}';
     }
 
     @Override
