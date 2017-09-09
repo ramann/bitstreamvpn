@@ -10,44 +10,30 @@
         <div>What are you doing here?</div>
     </div>
     <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + ' here are the certs for your purchase.'">Hi, username</div>
+        <div th:text=" 'Hi,' + ${username} + ' here are the certs for your subscription.'">Hi, username</div>
 
     </div>
 
-<!--    <div th:if="${certificatesSize == 0}">You have no certificates associated with this purchase.</div>
+    <h3>Certificates</h3>
+    <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+    <div th:if="${certificatesSize == 0}">You don't have any certificates associated with this subscription.</div>
+
     <table th:unless="${certificatesSize == 0}" th:classappend="table">
         <tr>
-            &lt;!&ndash;<th>ID</th>&ndash;&gt;
-            <th>Date Initiated</th>
-            <th>CSR</th>
             <th>Certificate</th>
-            <th>Revoke?</th>
+            <th>Download</th>
+            <th>Delete?</th>
         </tr>
         <tr th:each="certificate : ${certificates}">
-&lt;!&ndash;
-            <td th:text="${certificate.id}"></td>
-&ndash;&gt;
-            <td th:text="${certificate.dateInitiated}"></td>
-            <td><pre th:text="${certificate.csrText}"></pre></td>
             <td><pre th:text="${certificate.certText}">certificate text</pre></td>
-            <td th:if="${certificate.revoked}">REVOKED!</td>
-            <td th:unless="${certificate.revoked}"><a th:href="'/deleteCert?serial='+${certificate.serial}">revoke</a></td>
+            <td><a th:href="'/downloadCert?serial='+${certificate.serial}">download</a></td>
+            <td><a th:href="'/deleteCert?serial='+${certificate.serial}">delete</a></td>
         </tr>
-    </table>-->
+    </table>
 
-    <form name="f" th:action="@{/certs}" method="post">
-        <div>Paste in a PEM-formatted CSR.</div>
-        <fieldset>
-            <label for="csr">CSR:</label>
-            <textarea id="csr" name="csr" cols="70" rows="6"/>
-            <p th:if="${csr_error} != null" th:text="${csr_error}"></p><br/>
+    <a th:href="'/addCert?subscriptionId='+${subscriptionId}">Add a certificate</a>
 
-            <input type="hidden" name="purchaseId" th:value="${purchaseId}"></input>
-        </fieldset>
-        <div class="form-actions">
-            <button type="submit" class="btn">Request Cert</button>
-        </div>
-    </form>
+
 </div>
 
 </body>

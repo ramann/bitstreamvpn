@@ -11,25 +11,40 @@ public class Certificate {
     private boolean signed;
     private String certText;
     private Boolean revoked;
-    private Users users;
     private Long serial;
-
+    private Subscription subscription;
 
     public Certificate() {}
 
-    public Certificate(Timestamp dateInitiated, String csrText, boolean signed, Users users, Long serial) {
+    public Certificate(Certificate c) {  // clone?
+        this.id = c.getId();
+        this.dateInitiated = this.getDateInitiated();
+        this.csrText = this.getCsrText();
+        this.signed = this.isSigned();
+        this.certText = this.getCertText();
+        this.revoked = this.getRevoked();
+        this.serial = this.getSerial();
+        this.subscription = this.getSubscription();
+    }
+
+    public Certificate(Timestamp dateInitiated, String csrText, boolean signed, Subscription subscription, Long serial) {
         this.dateInitiated = dateInitiated;
         this.csrText = csrText;
         this.signed = signed;
-        this.users = users;
+        this.subscription = subscription;
         this.serial = serial;
     }
 
     @ManyToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="username")
-    public Users getUsers() { return users; }
+    @JoinColumn(name="subscription")
+    public Subscription getSubscription() {
+        return subscription;
+    }
 
-    public void setUsers(Users users) { this.users = users; }
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
+    }
+
 
     @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="certificate_id_seq", name="certificate_id_seq")
     @GeneratedValue(generator="certificate_id_seq", strategy=GenerationType.SEQUENCE)

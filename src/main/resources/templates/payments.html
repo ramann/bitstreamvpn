@@ -17,24 +17,49 @@
 -->
 
     <div th:if="${confirmedPaymentsSize > 0}">
-        <h3>Payment History</h3>
+        <h3>Payments</h3>
         <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
         <table th:classappend="table">
             <tr>
+                <th>ID</th>
                 <th>Receiving address</th>
                 <th>Amount</th>
                 <th>Time of 1st Confirmation</th>
             </tr>
-            <tr th:each="payment : ${paymentPresentations}">
+            <tr th:each="payment : ${confirmedPaymentPresentations}">
+                <td th:text="${payment.id}"></td>
                 <td th:text="${payment.receivingAddress}"></td>
                 <td th:if="${payment.dateConfirm1 != null}" th:text="${payment.amount}">amount</td>
                 <td th:if="${payment.dateConfirm1 != null}" th:text="${payment.desc}">1st confirmation</td>
-                <td class="alert alert-warning" th:unless="${payment.dateConfirm1 != null}" th:colspan="3"><a th:href="@{/enterpayment}">Awaiting Confirmation</a></td>
             </tr>
         </table>
     </div>
-
-    <form th:action="@{/addPayment}" method="post">
+    <hr/>
+    <div th:if="${processingPaymentsSize > 0}">
+        <h3>Payment(s) being confirmed</h3>
+        <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+        <table th:classappend="table">
+            <tr>
+                <th>ID</th>
+                <th>Receiving address</th>
+<!--
+                <th>Amount</th>
+-->
+                <th>Creation Date</th>
+            </tr>
+            <tr th:each="payment : ${processingPaymentPresentations}">
+                <td th:text="${payment.id}"></td>
+                <td th:text="${payment.receivingAddress}"></td>
+<!--
+                <td th:text="${payment.amount}"></td>
+-->
+                <td th:text="${payment.desc}"></td>
+            </tr>
+        </table>
+        <small>(Once these have been confirmed by the bitcoin network, you'll be able to submit another payment.)</small>
+    </div>
+<!-- th:unless="${processingPaymentsSize > 0}" -->
+    <form th:unless="${processingPaymentsSize > 0}" th:action="@{/addPayment}" method="post">
         <input type="hidden" name="subscriptionId" th:value="${subscriptionId}"/>
         <input class="btn" type="submit" value="add payment" />
     </form>

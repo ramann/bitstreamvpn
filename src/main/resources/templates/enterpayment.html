@@ -11,7 +11,7 @@
             <legend>Please Send Payment</legend>
             <p title="payTo" th:text="'pay to: ' + ${payTo}">payTo</p>
 
-            <div th:if="${pendingPurchase != null}">You've already initiated a payment. It will need to have at least one confirmation before you can initiate another one.</div>
+            <div th:if="${pendingPayment != null}">You've already initiated a payment. It will need to have at least one confirmation before you can initiate another one.</div>
             <!--<label for="btc">BTC:</label>
             <input type="text" id="btc" name="btc" th:value="${btc}"/>
             <p th:if="${bitcoin_error} != null" th:text="${bitcoin_error}"></p><br/>-->

@@ -1,7 +1,9 @@
 package com.company.dev.util;
 
-import com.company.dev.model.app.domain.Purchase;
-import com.company.dev.model.app.repo.PurchaseDao;
+import com.company.dev.model.app.domain.Payment;
+import com.company.dev.model.app.repo.CertificateDao;
+import com.company.dev.model.app.repo.PaymentDao;
+import com.company.dev.model.app.repo.SubscriptionDao;
 import com.company.dev.model.app.repo.UsersDao;
 import com.company.dev.model.ipsec.domain.*;
 import com.company.dev.model.ipsec.repo.*;
@@ -38,8 +40,10 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
+import static com.company.dev.util.Util.addDuration;
 import static com.company.dev.util.Util.reverseSubject;
 
 @Component
@@ -50,7 +54,10 @@ public class MyBean implements CommandLineRunner {
     private UsersDao usersDao;
 
     @Autowired
-    private PurchaseDao purchaseDao;
+    private SubscriptionDao subscriptionDao;
+
+    @Autowired
+    private PaymentDao paymentDao;
 
     @Autowired
     private CertificatesDao certificatesDao;
@@ -77,6 +84,7 @@ public class MyBean implements CommandLineRunner {
     private PrivateKeyIdentityDao privateKeyIdentityDao;
 
     public void run(String... args) {
+        final Logger logger = LoggerFactory.getLogger(this.getClass());
 
         /**
          * Set up CA and Server cert in IPsec database
@@ -285,15 +293,53 @@ System.out.println("reached");
                 Coin value = tx.getValueSentToMe(w);
                 System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
                 System.out.println("Transaction will be forwarded after it confirms.");
+
+                for(TransactionOutput t: tx.getOutputs()) {
+
+                    System.out.println("output1: "+t.getAddressFromP2SH(params));
+                    System.out.println("output2: "+t.getAddressFromP2PKHScript(params));
+
+                    for (Payment p:paymentDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
+                        //logger.info("p.getSubscription() is null?: "+(p.getSubscription()==null));
+                        //logger.info("p.getSubscription().id: "+p.getSubscription().getId());
+
+                        BigDecimal amountExpecting = subscriptionDao.findById(p.getSubscription().getId()).getPrice();
+                        BigDecimal amountReceived = new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8);
+                        //logger.info("price we were expecting: "+amountExpecting);
+
+                        /*if(!amountExpecting.equals(amountReceived)) {
+                            logger.error("address: "+p.getReceivingAddress()+" received "+amountReceived+", but was expecting "+amountExpecting);
+                            p.setInError(true);
+                        }*/
+                        Date now = new Date();
+                        p.setDateInitiated(new Timestamp(now.getTime()));
+
+                        // if the payment is first seen more than 10 mins after the payment was created, mark the payment as "in error"
+                        // due to the volatility of bitcoin exchange rates, they will need to pay again
+                        // if the amount received at this address is not the same as the amount we were expecting, mark it "in error"
+                        if (p.getDateInitiated().after(addDuration(p.getDateCreated(),10, Calendar.MINUTE)) ||
+                            !amountReceived.equals(amountExpecting))
+                        {
+                            logger.error("marking payment in error");
+                            p.setInError(true);
+                        }
+
+                        //p.setAmount(amountReceived);
+                        paymentDao.save(p);
+                    }
+
+                }
+
+
                 //Users users = usersDao.findByUsername("mark"); //principal.getName()
                 //Date d = new Date();
 
-                //Purchase p = new Purchase(new Timestamp(d.getTime()), new BigDecimal(value.getValue()).movePointLeft(Coin.SMALLEST_UNIT_EXPONENT), kit.wallet().currentReceiveAddress().toString(), users);
+                //Payment p = new Payment(new Timestamp(d.getTime()), new BigDecimal(value.getValue()).movePointLeft(Coin.SMALLEST_UNIT_EXPONENT), kit.wallet().currentReceiveAddress().toString(), users);
 
                 try {
-                //    purchaseDao.save(p);
+                //    paymentDao.save(p);
                 } catch (Exception ex) {
-                    System.out.println("Error creating the purchase: " + ex.toString());
+                    System.out.println("Error creating the payment: " + ex.toString());
                 }
 
 
@@ -303,6 +349,8 @@ System.out.println("reached");
                 // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
                 // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
                 // case of waiting for a block.
+
+                // TODO: this will be totally useless when we restart the app - the post-restart confirmation for a pre-restart transaction will not be picked up here
                 Futures.addCallback(tx.getConfidence().getDepthFuture(1), new FutureCallback<TransactionConfidence>() {
                     @Override
                     public void onSuccess(TransactionConfidence result) {
@@ -314,10 +362,22 @@ System.out.println("reached");
                             System.out.println("output1: "+t.getAddressFromP2SH(params));
                             System.out.println("output2: "+t.getAddressFromP2PKHScript(params));
 
-                            for (Purchase p:purchaseDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
+                            for (Payment p:paymentDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
+                                //logger.info("p.getSubscription() is null?: "+(p.getSubscription()==null));
+                                //logger.info("p.getSubscription().id: "+p.getSubscription().getId());
+
+                                BigDecimal amountExpecting = subscriptionDao.findById(p.getSubscription().getId()).getPrice();
+                                BigDecimal amountReceived = new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8);
+                                //logger.info("price we were expecting: "+amountExpecting);
+
+                                if(!amountExpecting.equals(amountReceived)) {
+                                    logger.error("address: "+p.getReceivingAddress()+" received "+amountReceived+", but was expecting "+amountExpecting);
+                                    p.setInError(true);
+                                }
+
                                 p.setDateConfirm1(new Timestamp(new Date().getTime()));
-                                p.setAmount(new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8));
-                                purchaseDao.save(p);
+                                p.setAmount(amountReceived);
+                                paymentDao.save(p);
                             }
 
                         }

@@ -5,12 +5,11 @@
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <mapping-file>/com/company/dev/model/app/domain/Product.xml</mapping-file>
         <mapping-file>/com/company/dev/model/app/domain/Users.xml</mapping-file>
-        <mapping-file>/com/company/dev/model/app/domain/Purchase.xml</mapping-file>
-        <mapping-file>/com/company/dev/model/app/domain/Certificate.xml</mapping-file>
         <class>com.company.dev.model.app.domain.Product</class>
         <class>com.company.dev.model.app.domain.Users</class>
-        <class>com.company.dev.model.app.domain.Purchase</class>
         <class>com.company.dev.model.app.domain.Certificate</class>
+        <class>com.company.dev.model.app.domain.Subscription</class>
+        <class>com.company.dev.model.app.domain.Payment</class>
         <properties>
             <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/test1"/>
             <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>

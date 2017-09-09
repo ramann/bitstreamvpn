@@ -1,10 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
 <body>
-$END$
+<header th:replace="layout :: header">
+</header>
+
+<div class="container" th:fragment="content">
+    <div th:if="${username == null}">
+        <div>What are you doing here?</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi,' + ${username} + '. Please add a subscription below.'">Hi, username</div>
+    </div>
+
+    <form name="f" th:action="@{/addCert}" method="post">
+        <div>Paste in a PEM-formatted CSR.</div>
+        <fieldset>
+            <label for="csr">CSR:</label>
+            <textarea id="csr" name="csr" cols="70" rows="6"/>
+            <p th:if="${csr_error} != null" th:text="${csr_error}"></p><br/>
+
+            <input type="hidden" name="subscriptionId" th:value="${subscriptionId}"></input>
+        </fieldset>
+        <div class="form-actions">
+            <button type="submit" class="btn">Request Cert</button>
+        </div>
+    </form>
+</div>
 </body>
 </html>

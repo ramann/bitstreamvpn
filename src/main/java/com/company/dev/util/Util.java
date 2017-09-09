@@ -2,7 +2,7 @@ package com.company.dev.util;
 
 import com.company.dev.model.ipsec.domain.Identities;
 import com.company.dev.model.ipsec.repo.IdentitiesDao;
-import com.sun.deploy.util.StringUtils;
+//import com.sun.deploy.util.StringUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
@@ -26,8 +26,7 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
+import org.thymeleaf.util.StringUtils;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
@@ -37,11 +36,25 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Util {
     private static final Logger logger = LoggerFactory.getLogger(Util.class);
+    public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+    public static final String END_CERT = "-----END CERTIFICATE-----";
+    public static int[] durations = {72, 168, 720};
+
+    // let's say 1 BTC=5000 USD, so at 0.02 USD/hour, the cost would be 0.000004 BTC/hour
+    public static final double pricePerUnit = 0.000004;
+
+    public static Timestamp addDuration(Timestamp timestamp, int duration, int calendarUnit) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(timestamp);
+        cal.add(calendarUnit, duration);
+        return new Timestamp(cal.getTimeInMillis());
+    }
 
     public static String getHashedPassword(String password, String salt) {
         long startTime = System.nanoTime();
@@ -76,21 +89,19 @@ public class Util {
 
     public static String prettyPrintCert(String uglyCert) {
         String certNice = "";
-        BASE64Encoder encoder = new BASE64Encoder();
-        certNice += X509Factory.BEGIN_CERT+"\n";
+        certNice += BEGIN_CERT+"\n";
 
         for (String s:getParts(uglyCert,64)) {
             certNice += s+"\n";
         }
 
-        certNice += X509Factory.END_CERT;
+        certNice += END_CERT;
         //System.out.println("certNice: "+certNice);
         return certNice;
     }
 
     public static String prettyPrintCsr(String uglyCsr) {
         String certNice = "";
-        BASE64Encoder encoder = new BASE64Encoder();
         certNice += "-----BEGIN CERTIFICATE REQUEST-----"+"\n";
 
         for (String s:getParts(uglyCsr,64)) {
@@ -104,7 +115,6 @@ public class Util {
 
     public static String prettyPrintCrl(String uglyCrl) {
         String crlNice = "";
-        BASE64Encoder encoder = new BASE64Encoder();
         crlNice += "-----BEGIN X509 CRL-----"+"\n";
 
         for (String s:getParts(uglyCrl,76)) {

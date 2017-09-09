@@ -1,14 +1,19 @@
 package com.company.dev.controller;
 
+import com.company.dev.model.app.PaymentPresentation;
+import com.company.dev.model.app.SubscriptionPresentation;
 import com.company.dev.model.app.domain.Certificate;
-import com.company.dev.model.app.domain.Purchase;
+import com.company.dev.model.app.domain.Payment;
+import com.company.dev.model.app.domain.Subscription;
 import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.CertificateDao;
-import com.company.dev.model.app.repo.PurchaseDao;
+import com.company.dev.model.app.repo.PaymentDao;
+import com.company.dev.model.app.repo.SubscriptionDao;
 import com.company.dev.model.app.repo.UsersDao;
 import com.company.dev.model.ipsec.domain.*;
 import com.company.dev.model.ipsec.repo.*;
 import com.company.dev.util.MyBean;
+import com.company.dev.util.TimeSpan;
 import com.company.dev.util.Util;
 import com.github.cage.Cage;
 import com.github.cage.YCage;
@@ -20,29 +25,12 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.apache.catalina.servlet4preview.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.bitcoinj.core.*;
 //import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.*;
-import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
-import org.bouncycastle.asn1.x500.AttributeTypeAndValue;
-import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
-import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.*;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DigestCalculator;
-import org.bouncycastle.operator.bc.BcContentSignerBuilder;
-import org.bouncycastle.operator.bc.BcDigestCalculatorProvider;
-import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -54,10 +42,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
 
-import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.ConstraintViolation;
@@ -65,16 +50,16 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import javax.xml.bind.DatatypeConverter;
-import javax.xml.crypto.Data;
 import java.io.*;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.util.*;
 
 import static com.company.dev.util.Util.*;
-import static com.company.dev.util.Util.getPrivateKey;
 import static java.lang.System.out;
 
 @Controller
@@ -229,10 +214,27 @@ public class UsersController {
     }
 */
 
-    @RequestMapping(method=RequestMethod.GET, value="/certs")
-    public String csr(Model model, Principal principal) {
+    @RequestMapping(method=RequestMethod.GET, value="/downloadCert")
+    @ResponseBody
+    public void downloadCert(Principal principal, long serial, HttpServletResponse response) {
+        Certificate certificate = certificateDao.findBySerial(serial);
 
-/*        List<Certificate> certificates = certificateDao.findByUsers(new Users(principal.getName()));
+        response.setContentType("text/plain");
+        String prettyCert = prettyPrintCert(certificate.getCertText());
+        try {
+            response.getOutputStream().write(prettyCert.getBytes(Charset.forName("UTF-8")));
+            response.flushBuffer();
+        } catch (IOException e) {
+            logger.error("failed to getOutputStream when downloading cert (serial:"+serial+")");
+        }
+        return;
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value="/certs")
+    public String csr(Model model, Principal principal, int subscriptionId) {
+
+        List<Certificate> certificates = certificateDao.findBySubscription(subscriptionDao.findById(subscriptionId));
+
         for(Certificate c:certificates) {
             try {
                 PemReader pemReaderCsr = new PemReader(new StringReader(prettyPrintCsr(c.getCsrText())));
@@ -253,24 +255,52 @@ public class UsersController {
                 logger.error(e.toString());
             }
         }
+
+        model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("certificates", certificates);
-        model.addAttribute("certificatesSize", certificates.size());*/
+        model.addAttribute("certificatesSize", certificates.size());
         model.addAttribute("username", principal.getName());
         return "certs";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value="/addCert")
+    public String addCert(Model model, Principal principal, HttpSession session, int subscriptionId) {
+        model.addAttribute("subscriptionId", subscriptionId);
+        model.addAttribute("username", principal.getName());
+        return "addCert";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value="/addSubscription")
+    public String addSubscription(Model model, Principal principal) {
+        logger.info("entered /addSubscription");
+        model.addAttribute("username", principal.getName());
+        return "addSubscription";
+    }
+
+    @RequestMapping(method=RequestMethod.POST, value="/addSubscription")
+    public String postAddSubscription(Model model, Principal principal, int duration, HttpServletResponse response) {
+        if(Arrays.binarySearch(durations,duration) >= 0) {
+            logger.error("duration: "+duration+" is not valid");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+        Subscription subscription = new Subscription(duration, new BigDecimal(duration*pricePerUnit), new Users(principal.getName()));
+        subscriptionDao.save(subscription);
+        return "redirect:/myaccount";
     }
 
     // TODO java uses UTF8STRING but openssl uses PRINTABLESTRING ...
     // TODO scripts/id2sql "C=US, O=test, CN=peer2" also uses PRINTABLESTRING so be mindful comparing its output with Java
     // TODO should we use PRINTABLESTRING
-    @RequestMapping(method=RequestMethod.POST, value="/certs")
-    public String postCSR(Model model, Principal principal, String csr, HttpSession session) {
+    @RequestMapping(method=RequestMethod.POST, value="/addCert")
+    public String postCSR(Model model, Principal principal, String csr, HttpSession session, int subscriptionId) {
         model.addAttribute("username", principal.getName());
         logger.info("das CSR: "+csr);
         logger.info("username: "+principal.getName());
         FileInputStream is;
+        Certificate savedCert = null;
         try {
             Security.addProvider(new BouncyCastleProvider());
-            logger.debug("found purchase!");
+            logger.debug("found payment!");
             is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
@@ -282,8 +312,8 @@ public class UsersController {
             BigInteger serial = new BigInteger( 32, new SecureRandom() );
             Certificate certificate = new Certificate(new Timestamp(new Date().getTime()),
                     Base64.encodeBase64String(pemObjectCsr.getContent()), false,
-                    usersDao.findByUsername(principal.getName()), serial.longValue());
-            Certificate savedCert = certificateDao.save(certificate);
+                    subscriptionDao.findById(subscriptionId), serial.longValue());
+            Certificate Certificate = certificateDao.save(certificate);
 
             X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
             PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
@@ -295,9 +325,9 @@ public class UsersController {
             logger.info("x509certificate: "+x509Certificate.toString());
             logger.info("cert: "+prettyPrintCert(Base64.encodeBase64String(x509Certificate.getEncoded())));
 
-            savedCert.setCertText(Base64.encodeBase64String(x509Certificate.getEncoded()));
-            savedCert.setRevoked(false);
-            certificateDao.save(savedCert);
+            Certificate.setCertText(Base64.encodeBase64String(x509Certificate.getEncoded()));
+            Certificate.setRevoked(false);
+            savedCert = certificateDao.save(Certificate);
             logger.info("getName: "+reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
 
             insertIpsecRecordsForClient(x509Certificate);
@@ -305,8 +335,11 @@ public class UsersController {
             out.println("Exception: "+e);
             return "Arghh!";
         }
-        session.setAttribute("certAdded", true);
-        return "redirect:/myaccount"; //?purchaseId="+purchaseId;
+        //session.setAttribute("certAdded", true);
+
+        model.addAttribute("certText",prettyPrintCert(savedCert.getCertText()));
+        return "certAdded";
+        //return "redirect:/myaccount"; //?purchaseId="+purchaseId;
     }
 
     private String deleteIpsecRecordsForClient(X509Certificate x509Certificate) {
@@ -407,28 +440,152 @@ public class UsersController {
         }
     }
 
+    @RequestMapping(method=RequestMethod.POST, value="/addPayment")
+    public String addPayment(Model model, Principal principal, HttpSession session, int subscriptionId) {
+        logger.info("/addPayment");
+        Subscription subscription = subscriptionDao.findById(subscriptionId);
+        List<Payment> processingPayments = paymentDao.findBySubscriptionAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalse(subscription);
+        if (processingPayments.size() > 0) {
+            return "processingPayments";
+        }
+        Date now = new Date();
+        Timestamp tenMinsAgo = addDuration(new Timestamp(now.getTime()),-10, Calendar.MINUTE);
+        Payment savedPendingPayment = null;
+
+        // payments that we haven't seen, that were created within the last 10 minutes
+        List<Payment> pendingPayments = paymentDao.findBySubscriptionAndDateInitiatedIsNullAndDateCreatedIsGreaterThan(subscription,
+                tenMinsAgo);
+
+        if(pendingPayments.isEmpty()) {
+            Address address = MyBean.kit.wallet().freshReceiveAddress();
+            Payment newPendingPayment = new Payment(new Timestamp(now.getTime()), address.toString(),
+                    subscriptionDao.findById(subscriptionId));
+            savedPendingPayment = paymentDao.save(newPendingPayment);
+        } else {
+            savedPendingPayment = pendingPayments.get(0);
+            if(pendingPayments.size() > 1) {
+                logger.error("ERROR: there is more than one unconfirmed payment for "+principal.getName());
+            }
+        }
+
+        //model.addAttribute("subscription", subscription);
+        model.addAttribute("username", principal.getName());
+        model.addAttribute("paymentAmount", subscription.getPrice());
+        model.addAttribute("subscriptionId", subscriptionId);
+        model.addAttribute("dateCreated", dateToGMT(savedPendingPayment.getDateCreated()));
+        model.addAttribute("dateDue", dateToGMT(addDuration(savedPendingPayment.getDateCreated(),10, Calendar.MINUTE)));
+        model.addAttribute("pendingPayment", savedPendingPayment.getReceivingAddress());
+        return "addPayment";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value="/payments")
+    public String payments(Model model, Principal principal, HttpSession session, int subscriptionId) {
+        logger.info("/payments for subscriptionId: "+subscriptionId);
+
+        Subscription subscription = subscriptionDao.findById(subscriptionId);
+        Date now = new Date();
+        Timestamp tenMinsAgo = addDuration(new Timestamp(now.getTime()),-10, Calendar.MINUTE);
+        logger.info("ten minutes ago: "+tenMinsAgo);
+        // mark payments not received on time as "in error"
+        // TODO: this can be moved somewhere else
+        List<Payment> paymentsNotReceivedInTime = paymentDao.findBySubscriptionAndDateInitiatedIsNullAndInErrorIsFalseAndDateCreatedIsLessThanEqual(subscription,
+                tenMinsAgo);
+        logger.info("paymentsNotReceivedInTime: "+paymentsNotReceivedInTime.size());
+        for(Payment p: paymentsNotReceivedInTime) {
+            p.setInError(true);
+            paymentDao.save(p);
+        }
+
+
+        List<Payment> confirmedPayments = paymentDao.findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Desc(subscription);
+        List<Payment> processingPayments = paymentDao.findBySubscriptionAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalse(subscription);
+        List<PaymentPresentation> processingPaymentPresentations = new ArrayList<PaymentPresentation>();
+        for (Payment p: processingPayments) {
+            processingPaymentPresentations.add(new PaymentPresentation(p,dateToGMT(p.getDateCreated())));
+        }
+
+        List<PaymentPresentation> confirmedPaymentPresentations = new ArrayList<PaymentPresentation>();
+        for(Payment p:confirmedPayments) {
+            confirmedPaymentPresentations.add(new PaymentPresentation(p,dateToGMT(p.getDateCreated())));
+        }
+        logger.info("principal.getName:"+principal.getName()+
+                ", confirmedPayments: "+confirmedPayments.size());
+
+        model.addAttribute("subscriptionId", subscriptionId);
+        model.addAttribute("confirmedPaymentPresentations", confirmedPaymentPresentations);
+        model.addAttribute("processingPaymentPresentations", processingPaymentPresentations);
+        //model.addAttribute("confirmedPayments", confirmedPayments);
+        model.addAttribute("confirmedPaymentsSize", confirmedPayments.size());
+        model.addAttribute("processingPaymentsSize", processingPayments.size());
+        model.addAttribute("username",principal.getName());
+        return "payments";
+    }
+
     @RequestMapping(method=RequestMethod.GET, value="/myaccount")
     public String myAccount(Model model, Principal principal, HttpSession session)
     {
         logger.info("/myaccount");
-        Purchase savedPendingPurchase = null;
-        List<Purchase> confirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNotNull(usersDao.findByUsername(principal.getName()));
-        List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
-        logger.info("principal.getName:"+principal.getName()+
-                ", confirmedPurchases: "+confirmedPurchases.size()+
-                ", unconfirmedPurchases: "+unconfirmedPurchases.size());
 
-        if(unconfirmedPurchases.isEmpty()) {
-            Address address = MyBean.kit.wallet().freshReceiveAddress();
-            Purchase newPendingPurchase = new Purchase(new Timestamp(new Date().getTime()), address.toString(), usersDao.findByUsername(principal.getName()));
-            savedPendingPurchase = purchaseDao.save(newPendingPurchase);
-        } else {
-            savedPendingPurchase = unconfirmedPurchases.get(0);
-            if(unconfirmedPurchases.size() > 1) {
-                logger.error("ERROR: there is more than one unconfirmed purchase for "+principal.getName());
+        List<Subscription> subscriptions = subscriptionDao.findByUsers(new Users(principal.getName()));
+        List<SubscriptionPresentation> subscriptionPresentations = new ArrayList<SubscriptionPresentation>(subscriptions.size());
+        for (Subscription s : subscriptions) {
+            /*List<Payment> payments = paymentDao.findBySubscriptionOrderByDateConfirm1Desc(s);
+            if (payments == null || payments.size() == 0 || payments.get(0).getDateConfirm1() == null) {
+                s.setTitle("inactive");
+            } else {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(payments.get(0).getDateConfirm1());
+                cal.add(Calendar.HOUR_OF_DAY, s.getDuration());
+
+                // for a subscription to be active, "now" needs to be less than the most recent payment + duration
+                if (new Date().before(cal.getTime())) {
+                    s.setTitle("active");
+                } else {
+                    s.setTitle("inactive");
+                }
+            }*/
+            List<Payment> payments = paymentDao.findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1(s);
+            List<TimeSpan> timeSpans = new ArrayList<TimeSpan>();
+            for(int i=0; i<payments.size(); i++) {
+                Timestamp thisDateConfirm1 = payments.get(i).getDateConfirm1();
+                Timestamp thisDateConfirm1PlusDuration = addDuration(thisDateConfirm1, s.getDuration(), Calendar.HOUR_OF_DAY);
+
+                if (i==0) {
+                    timeSpans.add(new TimeSpan(thisDateConfirm1,thisDateConfirm1PlusDuration));
+                } else {
+                    if (thisDateConfirm1.before(timeSpans.get(i-1).getEnd())) {
+                        Timestamp begin = timeSpans.get(i-1).getEnd();
+                        Timestamp end = addDuration(timeSpans.get(i-1).getEnd(), s.getDuration(), Calendar.HOUR_OF_DAY);
+                        timeSpans.add(new TimeSpan(begin, end));
+                    } else {
+                        timeSpans.add(new TimeSpan(thisDateConfirm1, thisDateConfirm1PlusDuration));
+                    }
+                }
             }
+            logger.warn("timeSpans.size:"+timeSpans.size());
+            for(TimeSpan t:timeSpans) {
+                logger.warn(t.toString());
+            }
+
+            boolean isActive = false;
+            String activeUntil = "";
+            for (int i=timeSpans.size()-1; i>=0 && !isActive; i--) {
+                Date now = new Date();
+                TimeSpan t = timeSpans.get(i);
+                logger.error(t.toString());
+                if (now.before(t.getEnd())) {
+                    isActive = true;
+                    activeUntil = "active (until " + dateToGMT(t.getEnd())+")";
+                    logger.warn(activeUntil);
+                }
+            }
+            //s.setTitle(isActive ? "active" : "inactive");
+            s.setDuration(s.getDuration() / 24);
+            subscriptionPresentations.add(new SubscriptionPresentation(s,isActive, activeUntil));
         }
 
+
+/*
         List<Certificate> certificates = certificateDao.findByUsers(new Users(principal.getName()));
         for(Certificate c:certificates) {
             try {
@@ -445,18 +602,22 @@ public class UsersController {
                 logger.error(e.toString());
             }
         }
+*/
 
+        model.addAttribute("subscriptionPresentations", subscriptionPresentations);
+        model.addAttribute("subscriptionPresentationsSize", subscriptionPresentations.size());
+
+        model.addAttribute("subscriptions", subscriptions);
+        model.addAttribute("subscriptionsSize", subscriptions.size());
         /**
          * certAdded and certDeleted should really never be false - only null or true
          */
         model.addAttribute("certAdded",(session.getAttribute("certAdded")!=null) ? session.getAttribute("certAdded") : false);
         model.addAttribute("certDeleted",(session.getAttribute("certDeleted")!=null) ? session.getAttribute("certDeleted") : false);
 
-        model.addAttribute("certificates", certificates);
+/*        model.addAttribute("certificates", certificates);
         model.addAttribute("certificatesSize",certificates.size());
-        model.addAttribute("confirmedPurchases", confirmedPurchases);
-        model.addAttribute("confirmedPurchasesSize", confirmedPurchases.size());
-        model.addAttribute("pendingPurchase", savedPendingPurchase==null ? null : savedPendingPurchase.getReceivingAddress());
+        */
         model.addAttribute("username", principal.getName());
         model.addAttribute("page", "myaccount");
         session.removeAttribute("certAdded");
@@ -573,11 +734,12 @@ public class UsersController {
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/qrcode")
-    public void qrcode(Principal principal, HttpServletResponse response, HttpSession session) {
+    public void qrcode(Principal principal, HttpServletResponse response, HttpSession session, int subscriptionId) {
+        logger.info("entered /qrcode");
+        Subscription subscription = subscriptionDao.findById(subscriptionId);
+        List<Payment> unconfirmedPayments = paymentDao.findBySubscriptionAndDateConfirm1IsNull(subscription);
 
-        List<Purchase> unconfirmedPurchases = purchaseDao.findByUsersAndDateConfirm1IsNull(usersDao.findByUsername(principal.getName()));
-
-        String qrCodeData = "bitcoin:"+unconfirmedPurchases.get(0).getReceivingAddress(); // +"?amount=0.1234";
+        String qrCodeData = "bitcoin:"+unconfirmedPayments.get(0).getReceivingAddress()+"?amount="+subscription.getPrice(); // +"?amount=0.1234";
         int qrCodeWidth = 200;
         int qrCodeHeight = 200;
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new HashMap<EncodeHintType, ErrorCorrectionLevel>();
@@ -800,7 +962,7 @@ public class UsersController {
     private UsersDao usersDao;
 
     @Autowired
-    private PurchaseDao purchaseDao;
+    private PaymentDao paymentDao;
 
     @Autowired
     CertificateDao certificateDao;
@@ -831,4 +993,7 @@ public class UsersController {
 
     @Autowired
     ChildConfigTrafficSelectorDao childConfigTrafficSelectorDao;
+
+    @Autowired
+    SubscriptionDao subscriptionDao;
 } // class UserController

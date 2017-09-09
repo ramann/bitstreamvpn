@@ -1,23 +1,13 @@
 package com.company.dev.model.app;
 
-import com.company.dev.model.app.domain.Subscription;
+import com.company.dev.model.app.domain.Certificate;
 
-public class SubscriptionPresentation extends Subscription {
-    boolean active;
+public class CertificatePresentation extends Certificate {
     String desc;
 
-    public SubscriptionPresentation(Subscription subscription, boolean isActive, String desc) {
-        super(subscription);
-        this.active = isActive;
+    public CertificatePresentation(Certificate certificate, String desc) {
+        super(certificate);
         this.desc = desc;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 
     public String getDesc() {

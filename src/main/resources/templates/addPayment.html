@@ -1,10 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
 <body>
-$END$
+<header th:replace="layout :: header">
+</header>
+
+<div class="container" th:fragment="content">
+    <div th:if="${username == null}">
+        <div>What are you doing here?</div>
+    </div>
+    <div th:unless="${username == null}">
+        <div th:text=" 'Hi,' + ${username} + '. Make a payment for subscription #' + ${subscriptionId}">Hi, username</div>
+    </div>
+    <div class="alert alert-info">You have ten minutes from the creation date to make payment.
+        Payment <strong>MUST</strong> be made before the due date shown below.
+        Send <strong>one</strong> payment for the full amount.
+    </div>
+    <div th:text="'Send payment to the below address.'"></div><br/>
+    <div>Amount Due: <strong th:text="${paymentAmount}"></strong></div>
+    <div>Address: <strong th:text="${pendingPayment}"></strong></div>
+    <div>Date due: <strong th:text="${dateDue}"></strong></div>
+    <div><small>(Date created: <strong th:text="${dateCreated}"></strong>)</small></div>
+
+    <img th:src="@{/qrcode} + '?subscriptionId=' + ${subscriptionId}"/><br/>
+
+</div>
 </body>
 </html>

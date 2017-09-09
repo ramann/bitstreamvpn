@@ -32,9 +32,9 @@
 <!--                <li th:classappend="${page == 'howitworks' ? 'active' : ''}">
                     <a href="#" th:href="@{/howitworks}">How it works</a>
                 </li>-->
-                <li th:if="${#authorization.expression('isAuthenticated()')}" th:classappend="${page == 'contact' ? 'active' : ''}">
+                <!--<li th:if="${#authorization.expression('isAuthenticated()')}" th:classappend="${page == 'contact' ? 'active' : ''}">
                     <a href="#" th:href="@{/contact}">Contact</a>
-                </li>
+                </li>-->
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li th:if="${#authorization.expression('!isAuthenticated()')}">

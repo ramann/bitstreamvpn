@@ -1,10 +1,13 @@
 package com.company.dev.model.app.repo;
 
-import com.company.dev.model.app.domain.Purchase;
+import com.company.dev.model.app.domain.Payment;
+import com.company.dev.model.app.domain.Subscription;
 import com.company.dev.model.app.domain.Users;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.List;
 
 
@@ -18,20 +21,29 @@ import java.util.List;
  * @author netgloo
  */
 @Transactional
-public interface PurchaseDao extends CrudRepository<Purchase, Long> {
+public interface PaymentDao extends CrudRepository<Payment, Long> {
 
-    /**
-     * Return the user having the passed email or null if no user is found.
-     *
-     * @param username the user name.
-     */
-    public List<Purchase> findByUsers(Users users);
+    public List<Payment> findBySubscriptionOrderByDateConfirm1Desc(Subscription subscription);
 
-    public Purchase findById(int purchaseId);
+    public Payment findById(int paymentId);
 
-    public List<Purchase> findByUsersAndDateConfirm1IsNull(Users users);
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNull(Subscription subscription);
 
-    public List<Purchase> findByUsersAndDateConfirm1IsNotNull(Users users);
+    public List<Payment> findBySubscriptionAndDateInitiatedIsNullAndDateCreatedIsGreaterThan(Subscription subscription, Timestamp timestamp);
 
-    public List<Purchase> findByReceivingAddress(String address);
+    public List<Payment> findBySubscriptionAndDateInitiatedIsNullAndInErrorIsFalseAndDateCreatedIsLessThanEqual(Subscription subscription, Timestamp timestamp);
+
+    public List<Payment> findBySubscriptionAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalse(Subscription subscription);
+
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNull(Subscription subscription);
+
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullOrderByDateConfirm1(Subscription subscription);
+
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1(Subscription subscription);
+
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Desc(Subscription subscription);
+
+    public List<Payment> findByReceivingAddress(String address);
+
+    public List<Payment> findBySubscriptionAndDateConfirm1IsAfter(Subscription subscription, Timestamp timestamp);
 } // class UserDao

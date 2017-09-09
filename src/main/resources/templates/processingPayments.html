@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
 <body>
-$END$
+<header th:replace="layout :: header">
+</header>
+
+<div class="container" th:fragment="content">
+    <div class="alert alert-info">
+        You already have payments that are being confirmed by the bitcoin network. You won't be able to make more payments until they've been confirmed.
+    </div>
+</div>
 </body>
 </html>

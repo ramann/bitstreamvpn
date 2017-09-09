@@ -1,9 +1,6 @@
 package com.company.dev.model.app.domain;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
@@ -16,8 +13,44 @@ public class Payment {
     private Timestamp dateConfirm1;
     private Timestamp dateConfirm3;
     private Timestamp dateConfirm6;
+    private Subscription subscription;
+    private boolean inError = false;
+    private Timestamp dateCreated;
+
+    public Payment() {
+    }
+
+    public Payment(Payment payment) {
+        this.id = payment.getId();
+        this.dateInitiated = payment.getDateInitiated();
+        this.amount = payment.getAmount();
+        this.receivingAddress = payment.getReceivingAddress();
+        this.dateConfirm1 = payment.getDateConfirm1();
+        this.dateConfirm3 = payment.getDateConfirm3();
+        this.dateConfirm6 = payment.getDateConfirm6();
+        this.subscription = payment.getSubscription();
+        this.inError = payment.isInError();
+    }
+
+    public Payment(Timestamp dateCreated, /*BigDecimal amount,*/ String receivingAddress, Subscription subscription) {
+        this.dateCreated = dateCreated;
+        //    this.amount = amount;
+        this.receivingAddress = receivingAddress;
+        //this.users = users;
+        this.subscription = subscription;
+    }
+/*
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="username")
+    public Users getUsers() { return users; }
+
+    public void setUsers(Users users) { this.users = users; }
+*/
 
     @Id
+    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="payment_id_seq", name="payment_id_seq")
+    @GeneratedValue(generator="payment_id_seq", strategy=GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     public int getId() {
         return id;
@@ -38,7 +71,7 @@ public class Payment {
     }
 
     @Basic
-    @Column(name = "amount", nullable = false, precision = 8)
+    @Column(name = "amount", nullable = true, precision = 8)
     public BigDecimal getAmount() {
         return amount;
     }
@@ -87,38 +120,33 @@ public class Payment {
         this.dateConfirm6 = dateConfirm6;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    @Basic
+    @Column(name = "in_error", nullable = false)
+    public boolean isInError() { return inError; }
 
-        Payment payment = (Payment) o;
-
-        if (id != payment.id) return false;
-        if (dateInitiated != null ? !dateInitiated.equals(payment.dateInitiated) : payment.dateInitiated != null)
-            return false;
-        if (amount != null ? !amount.equals(payment.amount) : payment.amount != null) return false;
-        if (receivingAddress != null ? !receivingAddress.equals(payment.receivingAddress) : payment.receivingAddress != null)
-            return false;
-        if (dateConfirm1 != null ? !dateConfirm1.equals(payment.dateConfirm1) : payment.dateConfirm1 != null)
-            return false;
-        if (dateConfirm3 != null ? !dateConfirm3.equals(payment.dateConfirm3) : payment.dateConfirm3 != null)
-            return false;
-        if (dateConfirm6 != null ? !dateConfirm6.equals(payment.dateConfirm6) : payment.dateConfirm6 != null)
-            return false;
-
-        return true;
+    public void setInError(boolean inError) {
+        this.inError = inError;
     }
 
-    @Override
-    public int hashCode() {
-        int result = id;
-        result = 31 * result + (dateInitiated != null ? dateInitiated.hashCode() : 0);
-        result = 31 * result + (amount != null ? amount.hashCode() : 0);
-        result = 31 * result + (receivingAddress != null ? receivingAddress.hashCode() : 0);
-        result = 31 * result + (dateConfirm1 != null ? dateConfirm1.hashCode() : 0);
-        result = 31 * result + (dateConfirm3 != null ? dateConfirm3.hashCode() : 0);
-        result = 31 * result + (dateConfirm6 != null ? dateConfirm6.hashCode() : 0);
-        return result;
+    @Basic
+    @Column(name = "date_created", nullable = true)
+    public Timestamp getDateCreated() {
+        return dateCreated;
     }
+
+    public void setDateCreated(Timestamp dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="subscription")
+    public Subscription getSubscription() {
+        return subscription;
+    }
+
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
+    }
+
+
 }

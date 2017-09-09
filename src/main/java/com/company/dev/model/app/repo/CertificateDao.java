@@ -1,7 +1,7 @@
 package com.company.dev.model.app.repo;
 
 import com.company.dev.model.app.domain.Certificate;
-import com.company.dev.model.app.domain.Purchase;
+import com.company.dev.model.app.domain.Subscription;
 import com.company.dev.model.app.domain.Users;
 import org.springframework.data.repository.CrudRepository;
 
@@ -21,7 +21,7 @@ import java.util.List;
 @Transactional
 public interface CertificateDao extends CrudRepository<Certificate, Long> {
 
-    public List<Certificate> findByUsers(Users users);
+    public List<Certificate> findBySubscription(Subscription subscription);
     public Certificate findById(int certificateId);
     public Certificate findBySerial(long serial);
 

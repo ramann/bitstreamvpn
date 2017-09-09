@@ -1,27 +1,33 @@
 package com.company.dev.model.app.domain;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 public class Subscription {
-    private String title;
     private int duration;
     private BigDecimal price;
-    private String username;
+    private Users users;
     private int id;
 
-    @Basic
-    @Column(name = "title", nullable = false, length = 20)
-    public String getTitle() {
-        return title;
+    public Subscription() {}
+
+    public Subscription(Subscription subscription) {
+        this.id = subscription.getId();
+        this.duration = subscription.getDuration();
+        this.price = subscription.getPrice();
+        this.users = subscription.getUsers();
+        this.id = subscription.getId();
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public Subscription(int id) {
+        this.id = id;
+    }
+
+    public Subscription(int duration, BigDecimal price, Users users) {
+        this.duration = duration;
+        this.price = price;
+        this.users = users;
     }
 
     @Basic
@@ -44,17 +50,15 @@ public class Subscription {
         this.price = price;
     }
 
-    @Basic
-    @Column(name = "username", nullable = true, length = 30)
-    public String getUsername() {
-        return username;
-    }
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="username")
+    public Users getUsers() { return users; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public void setUsers(Users users) { this.users = users; }
 
     @Id
+    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="subscription_id_seq", name="subscription_id_seq")
+    @GeneratedValue(generator="subscription_id_seq", strategy=GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     public int getId() {
         return id;
@@ -73,19 +77,15 @@ public class Subscription {
 
         if (duration != that.duration) return false;
         if (id != that.id) return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
         if (price != null ? !price.equals(that.price) : that.price != null) return false;
-        if (username != null ? !username.equals(that.username) : that.username != null) return false;
-
-        return true;
+        return users != null ? users.equals(that.users) : that.users == null;
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + duration;
+        int result = duration;
         result = 31 * result + (price != null ? price.hashCode() : 0);
-        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (users != null ? users.hashCode() : 0);
         result = 31 * result + id;
         return result;
     }
