@@ -43,7 +43,7 @@ public interface PaymentDao extends CrudRepository<Payment, Long> {
 
     public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Desc(Subscription subscription);
 
-    public List<Payment> findByReceivingAddress(String address);
+    public Payment findByReceivingAddress(String address);
 
     public List<Payment> findBySubscriptionAndDateConfirm1IsAfter(Subscription subscription, Timestamp timestamp);
 } // class UserDao

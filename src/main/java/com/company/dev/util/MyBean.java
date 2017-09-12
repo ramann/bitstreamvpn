@@ -48,40 +48,6 @@ import static com.company.dev.util.Util.reverseSubject;
 
 @Component
 public class MyBean implements CommandLineRunner {
-    public static WalletAppKit kit;
-
-    @Autowired
-    private UsersDao usersDao;
-
-    @Autowired
-    private SubscriptionDao subscriptionDao;
-
-    @Autowired
-    private PaymentDao paymentDao;
-
-    @Autowired
-    private CertificatesDao certificatesDao;
-
-    @Autowired
-    private IdentitiesDao identitiesDao;
-
-    @Autowired
-    private CertificateAuthoritiesDao certificateAuthoritiesDao;
-
-    @Autowired
-    private CertificateIdentityDao certificateIdentityDao;
-
-    @Autowired
-    private PoolsDao poolsDao;
-
-    @Autowired
-    private AddressesDao addressesDao;
-
-    @Autowired
-    private PrivateKeysDao privateKeysDao;
-
-    @Autowired
-    private PrivateKeyIdentityDao privateKeyIdentityDao;
 
     public void run(String... args) {
         final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -189,7 +155,7 @@ public class MyBean implements CommandLineRunner {
             Identities serverPubKeyIdentity = new Identities((byte) 11, new DigestUtils().sha1(serverCert.getPublicKey().getEncoded()));
             System.out.println("serverPubKeyIdentity: "+DatatypeConverter.printHexBinary(new DigestUtils().sha1(serverCert.getPublicKey().getEncoded())));
             Identities savedServerPubKeyIdentity = identitiesDao.save(serverPubKeyIdentity);
-System.out.println("reached");
+            System.out.println("reached");
 
             /*
              * Insert Server identity (subject key id)
@@ -259,146 +225,40 @@ System.out.println("reached");
             System.out.println(e.getMessage());
         }
 
-        /**
-         * Set up Bitcoin wallet
-         */
-        System.out.println("========= IS THIS THING ON =========");
-
-        NetworkParameters params;
-        String filePrefix;
-        params = RegTestParams.get();
-
-        filePrefix = "forwarding-service-regtest";
-        Context context = new Context(params);
-        // Start up a basic app using a class that automates some boilerplate.
-        kit = new WalletAppKit(context, new File("."), filePrefix);
-
-/*        if (params == RegTestParams.get()) {
-            // Regression test mode is designed for testing and development only, so there's no public network for it.
-            // If you pick this mode, you're expected to be running a local "bitcoind -regtest" instance.
-
-        }*/
-        kit.connectToLocalHost();
-
-        // Download the block chain and wait until it's done.
-        kit.startAsync();
-        kit.awaitRunning();
-
-        kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) {
-                // Runs in the dedicated "user thread" (see bitcoinj docs for more info on this).
-                //
-                // The transaction "tx" can either be pending, or included into a block (we didn't see the broadcast).
-                Coin value = tx.getValueSentToMe(w);
-                System.out.println("Received tx for " + value.toFriendlyString() + ": " + tx);
-                System.out.println("Transaction will be forwarded after it confirms.");
-
-                for(TransactionOutput t: tx.getOutputs()) {
-
-                    System.out.println("output1: "+t.getAddressFromP2SH(params));
-                    System.out.println("output2: "+t.getAddressFromP2PKHScript(params));
-
-                    for (Payment p:paymentDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
-                        //logger.info("p.getSubscription() is null?: "+(p.getSubscription()==null));
-                        //logger.info("p.getSubscription().id: "+p.getSubscription().getId());
-
-                        BigDecimal amountExpecting = subscriptionDao.findById(p.getSubscription().getId()).getPrice();
-                        BigDecimal amountReceived = new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8);
-                        //logger.info("price we were expecting: "+amountExpecting);
-
-                        /*if(!amountExpecting.equals(amountReceived)) {
-                            logger.error("address: "+p.getReceivingAddress()+" received "+amountReceived+", but was expecting "+amountExpecting);
-                            p.setInError(true);
-                        }*/
-                        Date now = new Date();
-                        p.setDateInitiated(new Timestamp(now.getTime()));
-
-                        // if the payment is first seen more than 10 mins after the payment was created, mark the payment as "in error"
-                        // due to the volatility of bitcoin exchange rates, they will need to pay again
-                        // if the amount received at this address is not the same as the amount we were expecting, mark it "in error"
-                        if (p.getDateInitiated().after(addDuration(p.getDateCreated(),10, Calendar.MINUTE)) ||
-                            !amountReceived.equals(amountExpecting))
-                        {
-                            logger.error("marking payment in error");
-                            p.setInError(true);
-                        }
-
-                        //p.setAmount(amountReceived);
-                        paymentDao.save(p);
-                    }
-
-                }
-
-
-                //Users users = usersDao.findByUsername("mark"); //principal.getName()
-                //Date d = new Date();
-
-                //Payment p = new Payment(new Timestamp(d.getTime()), new BigDecimal(value.getValue()).movePointLeft(Coin.SMALLEST_UNIT_EXPONENT), kit.wallet().currentReceiveAddress().toString(), users);
-
-                try {
-                //    paymentDao.save(p);
-                } catch (Exception ex) {
-                    System.out.println("Error creating the payment: " + ex.toString());
-                }
-
-
-                // Wait until it's made it into the block chain (may run immediately if it's already there).
-                //
-                // For this dummy app of course, we could just forward the unconfirmed transaction. If it were
-                // to be double spent, no harm done. Wallet.allowSpendingUnconfirmedTransactions() would have to
-                // be called in onSetupCompleted() above. But we don't do that here to demonstrate the more common
-                // case of waiting for a block.
-
-                // TODO: this will be totally useless when we restart the app - the post-restart confirmation for a pre-restart transaction will not be picked up here
-                Futures.addCallback(tx.getConfidence().getDepthFuture(1), new FutureCallback<TransactionConfidence>() {
-                    @Override
-                    public void onSuccess(TransactionConfidence result) {
-                        //forwardCoins(tx);
-                        System.out.println("Some coins were received");
-
-                        for(TransactionOutput t: tx.getOutputs()) {
-
-                            System.out.println("output1: "+t.getAddressFromP2SH(params));
-                            System.out.println("output2: "+t.getAddressFromP2PKHScript(params));
-
-                            for (Payment p:paymentDao.findByReceivingAddress(t.getAddressFromP2PKHScript(params).toString())) {
-                                //logger.info("p.getSubscription() is null?: "+(p.getSubscription()==null));
-                                //logger.info("p.getSubscription().id: "+p.getSubscription().getId());
-
-                                BigDecimal amountExpecting = subscriptionDao.findById(p.getSubscription().getId()).getPrice();
-                                BigDecimal amountReceived = new BigDecimal(tx.getValueSentToMe(w).getValue()).movePointLeft(8);
-                                //logger.info("price we were expecting: "+amountExpecting);
-
-                                if(!amountExpecting.equals(amountReceived)) {
-                                    logger.error("address: "+p.getReceivingAddress()+" received "+amountReceived+", but was expecting "+amountExpecting);
-                                    p.setInError(true);
-                                }
-
-                                p.setDateConfirm1(new Timestamp(new Date().getTime()));
-                                p.setAmount(amountReceived);
-                                paymentDao.save(p);
-                            }
-
-                        }
-
-                    //    p.setDateConfirm1(new Timestamp(new Date().getTime()));
-                        try {
-                    //        purchaseDao.save(p);
-                        } catch (Exception ex) {
-                            System.out.println("Error save confirmation 1: " + ex.toString());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        // This kind of future can't fail, just rethrow in case something weird happens.
-                        throw new RuntimeException(t);
-                    }
-                });
-            }
-        });
     }
 
+
+    @Autowired
+    private UsersDao usersDao;
+
+    @Autowired
+    private SubscriptionDao subscriptionDao;
+
+    @Autowired
+    private PaymentDao paymentDao;
+
+    @Autowired
+    private CertificatesDao certificatesDao;
+
+    @Autowired
+    private IdentitiesDao identitiesDao;
+
+    @Autowired
+    private CertificateAuthoritiesDao certificateAuthoritiesDao;
+
+    @Autowired
+    private CertificateIdentityDao certificateIdentityDao;
+
+    @Autowired
+    private PoolsDao poolsDao;
+
+    @Autowired
+    private AddressesDao addressesDao;
+
+    @Autowired
+    private PrivateKeysDao privateKeysDao;
+
+    @Autowired
+    private PrivateKeyIdentityDao privateKeyIdentityDao;
 
 }

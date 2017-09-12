@@ -148,5 +148,19 @@ public class Payment {
         this.subscription = subscription;
     }
 
-
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "id=" + id +
+                ", dateInitiated=" + dateInitiated +
+                ", amount=" + amount +
+                ", receivingAddress='" + receivingAddress + '\'' +
+                ", dateConfirm1=" + dateConfirm1 +
+                ", dateConfirm3=" + dateConfirm3 +
+                ", dateConfirm6=" + dateConfirm6 +
+                ", subscription=" + subscription.getId() +
+                ", inError=" + inError +
+                ", dateCreated=" + dateCreated +
+                '}';
+    }
 }
