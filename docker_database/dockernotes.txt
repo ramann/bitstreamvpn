@@ -1,6 +1,0 @@
-mysql_container_id=$(docker run -d -v /home/ram/java/simple-webapp-spring-2/db/testmysqld.cnf:/etc/mysql/mysql.conf.d/testmysqld.cnf -e MYSQL_ROOT_PASSWORD=my-secret-pw mysql:5.7.19)
-sleep 30
-cat root.mysql.sql| docker exec -i $mysql_container_id mysql -u root --password=my-secret-pw
-cat app.mysql.sql| docker exec -i $mysql_container_id mysql -u test1 --password=testing test1
-cat ipsec.mysql.sql| docker exec -i $mysql_container_id mysql -u testipsecuser --password=testing testipsecdb
-docker exec -it $mysql_container_id mysql -uroot -pmy-secret-pw
