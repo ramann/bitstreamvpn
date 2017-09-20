@@ -23,27 +23,17 @@ import java.util.List;
 @Transactional
 public interface PaymentDao extends CrudRepository<Payment, Long> {
 
-    public List<Payment> findBySubscriptionOrderByDateConfirm1Desc(Subscription subscription);
+    public Payment findByIdAndSubscription_UsersAndDateInitiatedIsNullAndInErrorIsFalse(int paymentId, Users users);
 
-    public Payment findById(int paymentId);
+    public List<Payment> findBySubscriptionAndSubscription_UsersAndDateInitiatedIsNullAndDateCreatedIsGreaterThan(
+            Subscription subscription, Users users, Timestamp timestamp);
 
-    public List<Payment> findBySubscriptionAndDateConfirm1IsNull(Subscription subscription);
+    public List<Payment> findBySubscriptionAndSubscription_UsersAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalseOrderByDateCreatedAsc(
+            Subscription subscription, Users users);
 
-    public List<Payment> findBySubscriptionAndDateInitiatedIsNullAndDateCreatedIsGreaterThan(Subscription subscription, Timestamp timestamp);
-
-    public List<Payment> findBySubscriptionAndDateInitiatedIsNullAndInErrorIsFalseAndDateCreatedIsLessThanEqual(Subscription subscription, Timestamp timestamp);
-
-    public List<Payment> findBySubscriptionAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalse(Subscription subscription);
-
-    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNull(Subscription subscription);
-
-    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullOrderByDateConfirm1(Subscription subscription);
-
-    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1(Subscription subscription);
-
-    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Desc(Subscription subscription);
+    public List<Payment> findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
+            Subscription subscription, Users users);
 
     public Payment findByReceivingAddress(String address);
 
-    public List<Payment> findBySubscriptionAndDateConfirm1IsAfter(Subscription subscription, Timestamp timestamp);
 } // class UserDao

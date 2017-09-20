@@ -10,6 +10,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,6 +37,9 @@ import static java.lang.System.out;
 public class UsersController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Value("${app.dev}")
+    public boolean appDev;
+
     @RequestMapping(method=RequestMethod.GET, value="/createaccount")
     public String createAccount(Users users, Model model)
     {
@@ -43,66 +47,20 @@ public class UsersController {
         return "createaccount";
     }
 
-    @ExceptionHandler(value = { ConstraintViolationException.class })
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public String validateAccountSetup(ConstraintViolationException e, Model model, HttpServletRequest request, HttpSession session) {
-        Set<ConstraintViolation<?>> violations = e.getConstraintViolations();
-        StringBuilder strBuilder = new StringBuilder();
-        for (ConstraintViolation<?> violation : violations ) {
-            strBuilder.append(violation.getMessage() + "\n");
-            if(violation.getMessage().contains("Username")) {
-                out.println("username_error");
-                model.addAttribute("username_error", violation.getMessage());
-                model.addAttribute("username", "");
-            }
-            if(violation.getMessage().contains("Password confirmation")) {
-                model.addAttribute("password_confirm_error", violation.getMessage());
-            }
-            if(violation.getMessage().contains("Password must")) {
-                model.addAttribute("password_error", violation.getMessage());
-            }
-            if(violation.getMessage().contains("CAPTCHA")) {
-                model.addAttribute("captcha_error", violation.getMessage());
-            }
-        }
-
-        if (!model.containsAttribute("password_error") &&
-                !model.containsAttribute("password_confirm_error") &&
-                !request.getParameter("password").equals(request.getParameter("confirmPassword"))) {
-            model.addAttribute("password_confirm_error", "Password and password confirmation are not equal");
-        }
-        if (!model.containsAttribute("captcha_error") &&
-                !request.getParameter("captcha").equals(session.getAttribute("captchaToken"))) {
-            model.addAttribute("captcha_error", "CAPTCHA value didn't match.");
-        }
-
-        if(!model.containsAttribute("username_error")) {
-            model.addAttribute("username", request.getParameter("username"));
-        }
-
-        session.setAttribute("captchaToken", null);
-
-        return "createaccount";
-    }
-
     @RequestMapping(method=RequestMethod.POST, value="/createaccount")
-    public String accountSetup(@Pattern(regexp="^[a-zA-Z0-9]{3,10}$", message="Username must be 3 to 10 alphanumeric characters")
-                                                String username,
-                                    /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
-                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
-                               @Size(min=4, max=10, message="Password must be 4 to 10 characters")
-                                            String password,
-                                    /*@Pattern(regexp="^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\\p{Punct}).{4,10}$",
-                                            message="Password must be between 4 and 10 characters long and contain a lowercase, uppercase, numeral, and punctuation character.")*/
-                                    /* @Pattern(regexp="^{4,10}$", message="Password confirmation didn't match") */
-                                                String confirmPassword,
-                                    /*@Pattern(regexp="^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$", message="You must enter a Bitcoin address")
-                                                String btc,*/
-                                    /*@Size(min=7, max=7, message="CAPTCHA value is wrong.")*/ String captcha,
-                                    Model model, HttpSession session) //String confirm_password, String btc, Model model,HttpSession session,
+    public String accountSetup(String username, String password, String confirmPassword, String captcha, Model model,
+                               HttpSession session)
     {
         // We do this validation here because the annotations above won't catch these.
         boolean errors = false;
+        if( !username.matches("^[a-zA-Z0-9]{3,10}$")) {
+            model.addAttribute("username_error", "Username must be 3 to 10 alphanumeric characters");
+            errors = true;
+        }
+        if( password.length() < 4 || password.length() > 10) {
+            model.addAttribute("password_error", "Password must be 4 to 10 characters");
+            errors = true;
+        }
         if( !captcha.equals(session.getAttribute("captchaToken"))) {
             model.addAttribute("captcha_error", "It looks like you've entered the wrong CAPTCHA value, here's a different one to try.");
             errors = true;
@@ -117,7 +75,7 @@ public class UsersController {
         } else {
             model.addAttribute("username", username);
         }
-        if(errors) {
+        if(appDev || errors) {
             return "createaccount";
         }
 
@@ -211,8 +169,6 @@ public class UsersController {
         }
         return "viewproducts";
     }
-
-
 
     /**
      * Generates captcha as image and returns the image path

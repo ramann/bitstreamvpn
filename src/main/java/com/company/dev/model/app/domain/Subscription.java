@@ -1,33 +1,38 @@
 package com.company.dev.model.app.domain;
 
+import org.springframework.data.jpa.repository.Query;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 @Entity
+@Table(name="subscription")
 public class Subscription {
     private int duration;
     private BigDecimal price;
     private Users users;
     private int id;
+    private Timestamp dateCreated;
 
     public Subscription() {}
 
     public Subscription(Subscription subscription) {
-        this.id = subscription.getId();
-        this.duration = subscription.getDuration();
-        this.price = subscription.getPrice();
-        this.users = subscription.getUsers();
-        this.id = subscription.getId();
+        this.id = subscription.id;
+        this.duration = subscription.duration;
+        this.price = subscription.price;
+        this.users = subscription.users;
     }
 
     public Subscription(int id) {
         this.id = id;
     }
 
-    public Subscription(int duration, BigDecimal price, Users users) {
+    public Subscription(int duration, BigDecimal price, Users users, Timestamp dateCreated) {
         this.duration = duration;
         this.price = price;
         this.users = users;
+        this.dateCreated = dateCreated;
     }
 
     @Basic
@@ -56,10 +61,14 @@ public class Subscription {
 
     public void setUsers(Users users) { this.users = users; }
 
+
+//    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="subscription_id_seq", name="subscription_id_seq")
+//    @GeneratedValue(generator="subscription_id_seq", strategy=GenerationType.SEQUENCE)
     @Id
-    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="subscription_id_seq", name="subscription_id_seq")
-    @GeneratedValue(generator="subscription_id_seq", strategy=GenerationType.SEQUENCE)
+    //@Query("SELECT public.pseudo_encrypt(nextval('subscription_id_seq'))")
     @Column(name = "id", nullable = false)
+//    @Query("SELECT pseudo_encrypt(nextval('subscription_id_seq'))")
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     public int getId() {
         return id;
     }
@@ -67,6 +76,17 @@ public class Subscription {
     public void setId(int id) {
         this.id = id;
     }
+
+    @Basic
+    @Column(name = "date_created", nullable = true)
+    public Timestamp getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(Timestamp dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
 
     @Override
     public boolean equals(Object o) {
@@ -89,4 +109,6 @@ public class Subscription {
         result = 31 * result + id;
         return result;
     }
+
+
 }

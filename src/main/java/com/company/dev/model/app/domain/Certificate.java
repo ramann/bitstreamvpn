@@ -1,9 +1,11 @@
 package com.company.dev.model.app.domain;
 
 import javax.persistence.*;
+import java.sql.Time;
 import java.sql.Timestamp;
 
 @Entity
+@Table(name="certificate")
 public class Certificate {
     private int id;
     private Timestamp dateInitiated;
@@ -13,6 +15,7 @@ public class Certificate {
     private Boolean revoked;
     private Long serial;
     private Subscription subscription;
+    private Timestamp dateCreated;
 
     public Certificate() {}
 
@@ -25,10 +28,11 @@ public class Certificate {
         this.revoked = this.getRevoked();
         this.serial = this.getSerial();
         this.subscription = this.getSubscription();
+        this.dateCreated = this.getDateCreated();
     }
 
-    public Certificate(Timestamp dateInitiated, String csrText, boolean signed, Subscription subscription, Long serial) {
-        this.dateInitiated = dateInitiated;
+    public Certificate(Timestamp dateCreated, String csrText, boolean signed, Subscription subscription, Long serial) {
+        this.dateCreated = dateCreated;
         this.csrText = csrText;
         this.signed = signed;
         this.subscription = subscription;
@@ -45,10 +49,8 @@ public class Certificate {
         this.subscription = subscription;
     }
 
-
-    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="certificate_id_seq", name="certificate_id_seq")
-    @GeneratedValue(generator="certificate_id_seq", strategy=GenerationType.SEQUENCE)
     @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="id")
     public int getId() {
         return id;
@@ -67,6 +69,17 @@ public class Certificate {
     public void setDateInitiated(Timestamp dateInitiated) {
         this.dateInitiated = dateInitiated;
     }
+
+    @Basic
+    @Column(name = "date_created", nullable = false)
+    public Timestamp getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(Timestamp dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
 
     @Basic
     @Column(name = "csr_text", nullable = false, length = 4096)

@@ -22,7 +22,7 @@
     <div>Date due: <strong th:text="${dateDue}"></strong></div>
     <div><small>(Date created: <strong th:text="${dateCreated}"></strong>)</small></div>
 
-    <img th:src="@{/qrcode} + '?subscriptionId=' + ${subscriptionId}"/><br/>
+    <img th:src="@{/qrcode} + '?paymentId=' + ${paymentId}"/><br/>
 
 </div>
 </body>

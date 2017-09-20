@@ -1,14 +1,19 @@
 package com.company.dev.model.app.domain;
 
+//import org.springframework.data.annotation.Id;
+import org.springframework.data.jpa.repository.Query;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Entity
+@Table(name="payment")
 public class Payment {
     private int id;
     private Timestamp dateInitiated;
     private BigDecimal amount;
+    private BigDecimal amountExpecting;
     private String receivingAddress;
     private Timestamp dateConfirm1;
     private Timestamp dateConfirm3;
@@ -32,12 +37,13 @@ public class Payment {
         this.inError = payment.isInError();
     }
 
-    public Payment(Timestamp dateCreated, /*BigDecimal amount,*/ String receivingAddress, Subscription subscription) {
+    public Payment(Timestamp dateCreated, String receivingAddress, Subscription subscription, BigDecimal amountExpecting) {
         this.dateCreated = dateCreated;
         //    this.amount = amount;
         this.receivingAddress = receivingAddress;
         //this.users = users;
         this.subscription = subscription;
+        this.amountExpecting = amountExpecting;
     }
 /*
 
@@ -49,8 +55,9 @@ public class Payment {
 */
 
     @Id
-    @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="payment_id_seq", name="payment_id_seq")
-    @GeneratedValue(generator="payment_id_seq", strategy=GenerationType.SEQUENCE)
+   // @SequenceGenerator(allocationSize=1, initialValue=1, sequenceName="payment_id_seq", name="payment_id_seq")
+   // @GeneratedValue(generator="payment_id_seq", strategy=GenerationType.SEQUENCE)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     public int getId() {
         return id;
@@ -78,6 +85,16 @@ public class Payment {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    @Basic
+    @Column(name = "amount_expecting", nullable = false, precision = 8)
+    public BigDecimal getAmountExpecting() {
+        return amountExpecting;
+    }
+
+    public void setAmountExpecting(BigDecimal amountExpecting) {
+        this.amountExpecting = amountExpecting;
     }
 
     @Basic
@@ -138,7 +155,7 @@ public class Payment {
         this.dateCreated = dateCreated;
     }
 
-    @ManyToOne(fetch=FetchType.LAZY)
+    @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name="subscription")
     public Subscription getSubscription() {
         return subscription;
@@ -154,6 +171,7 @@ public class Payment {
                 "id=" + id +
                 ", dateInitiated=" + dateInitiated +
                 ", amount=" + amount +
+                ", amountExpecting=" + amountExpecting +
                 ", receivingAddress='" + receivingAddress + '\'' +
                 ", dateConfirm1=" + dateConfirm1 +
                 ", dateConfirm3=" + dateConfirm3 +

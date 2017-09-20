@@ -1,9 +1,6 @@
 package com.company.dev.model.app.domain;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.security.SecureRandom;
 
@@ -11,6 +8,7 @@ import com.company.dev.util.Util;
 import org.apache.commons.codec.binary.Base64;
 
 @Entity
+@Table(name="users")
 public class Users {
     private String username;
     private String password;

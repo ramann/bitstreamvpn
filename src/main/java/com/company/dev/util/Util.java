@@ -1,5 +1,8 @@
 package com.company.dev.util;
 
+import com.company.dev.model.app.domain.Certificate;
+import com.company.dev.model.app.domain.Payment;
+import com.company.dev.model.app.domain.Subscription;
 import com.company.dev.model.ipsec.domain.Identities;
 import com.company.dev.model.ipsec.repo.IdentitiesDao;
 //import com.sun.deploy.util.StringUtils;
@@ -26,6 +29,7 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.thymeleaf.util.StringUtils;
@@ -48,8 +52,18 @@ public class Util {
     public static final String END_CERT = "-----END CERTIFICATE-----";
     public static int[] durations = {72, 168, 720};
 
-    // let's say 1 BTC=5000 USD, so at 0.02 USD/hour, the cost would be 0.000004 BTC/hour
-    public static final double pricePerUnit = 0.000004;
+    // let's say 0.02 USD/hour
+    public static final double pricePerUnit = 0.02;
+
+    public static String errorText(String objectName, String objectValue) {
+        objectName = objectName.substring(objectName.lastIndexOf('.') + 1).trim();
+        return "Could not find "+objectName+" " +objectValue+ ".";
+    }
+
+    public static String errorText(String objectName, String objectValue, String userName) {
+        objectName = objectName.substring(objectName.lastIndexOf('.') + 1).trim();
+        return "Could not find "+objectName+" "+objectValue+" for user: "+userName;
+    }
 
     public static Timestamp addDuration(Timestamp timestamp, int duration, int calendarUnit) {
         Calendar cal = Calendar.getInstance();
@@ -138,10 +152,10 @@ public class Util {
         return parts;
     }
 
-    public static X509Certificate getServerCert() {
+    public static X509Certificate getServerCert(String keystoreLocation) {
         X509Certificate serverCert = null;
         try {
-            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
+            InputStream is = new FileInputStream(keystoreLocation);
 
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
@@ -258,10 +272,10 @@ public class Util {
         return holder;
     }
 
-    public static PrivateKey getPrivateKey() {
+    public static PrivateKey getPrivateKey(String keystoreLocation) {
         PrivateKey caKey = null;
         try {
-            InputStream is = new FileInputStream("/home/ram/java/simple-webapp-spring-2/ipsec-pki/server.keystore");
+            InputStream is = new FileInputStream(keystoreLocation);
 
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());

@@ -37,12 +37,14 @@ public class SubscriptionController {
 
     @RequestMapping(method=RequestMethod.POST, value="/addSubscription")
     public String postAddSubscription(Model model, Principal principal, int duration, HttpServletResponse response) {
-        if(Arrays.binarySearch(durations,duration) >= 0) {
+        if(Arrays.binarySearch(durations,duration) < 0) {
             logger.error("duration: "+duration+" is not valid");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        Subscription subscription = new Subscription(duration, new BigDecimal(duration*pricePerUnit), new Users(principal.getName()));
-        subscriptionDao.save(subscription);
+        Subscription subscription = new Subscription(duration, new BigDecimal(duration*pricePerUnit),
+                new Users(principal.getName()), new Timestamp(new Date().getTime()));
+        Subscription savedSubscription = subscriptionDao.save(subscription);
+        logger.info("saved id ("+savedSubscription.getId()+"), duration is "+savedSubscription.getDuration());
         return "redirect:/myaccount";
     }
 
@@ -54,22 +56,8 @@ public class SubscriptionController {
         List<Subscription> subscriptions = subscriptionDao.findByUsers(new Users(principal.getName()));
         List<SubscriptionPresentation> subscriptionPresentations = new ArrayList<SubscriptionPresentation>(subscriptions.size());
         for (Subscription s : subscriptions) {
-            /*List<Payment> payments = paymentDao.findBySubscriptionOrderByDateConfirm1Desc(s);
-            if (payments == null || payments.size() == 0 || payments.get(0).getDateConfirm1() == null) {
-                s.setTitle("inactive");
-            } else {
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(payments.get(0).getDateConfirm1());
-                cal.add(Calendar.HOUR_OF_DAY, s.getDuration());
-
-                // for a subscription to be active, "now" needs to be less than the most recent payment + duration
-                if (new Date().before(cal.getTime())) {
-                    s.setTitle("active");
-                } else {
-                    s.setTitle("inactive");
-                }
-            }*/
-            List<Payment> payments = paymentDao.findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1(s);
+            List<Payment> payments = paymentDao.findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
+                    s,new Users(principal.getName()));
             List<TimeSpan> timeSpans = new ArrayList<TimeSpan>();
             for(int i=0; i<payments.size(); i++) {
                 Timestamp thisDateConfirm1 = payments.get(i).getDateConfirm1();
@@ -87,10 +75,10 @@ public class SubscriptionController {
                     }
                 }
             }
-            logger.warn("timeSpans.size:"+timeSpans.size());
+            /*logger.warn("timeSpans.size:"+timeSpans.size());
             for(TimeSpan t:timeSpans) {
                 logger.warn(t.toString());
-            }
+            }*/
 
             boolean isActive = false;
             String activeUntil = "";
@@ -104,30 +92,11 @@ public class SubscriptionController {
                     logger.warn(activeUntil);
                 }
             }
-            //s.setTitle(isActive ? "active" : "inactive");
-            s.setDuration(s.getDuration() / 24);
-            subscriptionPresentations.add(new SubscriptionPresentation(s,isActive, activeUntil));
-        }
 
+            SubscriptionPresentation sp = new SubscriptionPresentation(s,isActive, activeUntil);
 
-/*
-        List<Certificate> certificates = certificateDao.findByUsers(new Users(principal.getName()));
-        for(Certificate c:certificates) {
-            try {
-                PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(c.getCertText())));
-                PemObject pemObjectCert = pemReaderCert.readPemObject();
-                X509CertificateHolder cert = new X509CertificateHolder(pemObjectCert.getContent());
-                c.setCertText("serial: "+cert.getSerialNumber()+"\n"+
-                        "subject: "+ cert.getSubject().toString()+"\n"+
-                        "creation date: " + dateToGMT(cert.getNotBefore())+"\n"+
-                        "expiration date: "+dateToGMT(cert.getNotAfter())); // TODO display time in GMT
-                System.out.println("c:"+c.getCertText());
-            } catch (Exception e) {
-                logger.error("Error reading pem of CSR or cert");
-                logger.error(e.toString());
-            }
+            subscriptionPresentations.add(sp);
         }
-*/
 
         model.addAttribute("subscriptionPresentations", subscriptionPresentations);
         model.addAttribute("subscriptionPresentationsSize", subscriptionPresentations.size());
