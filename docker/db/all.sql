@@ -1,3 +1,92 @@
+-- create databases and users
+
+create database test1;
+create user 'test1' identified by 'testing';
+grant all privileges on test1.* to 'test1';
+
+create database testipsecdb;
+create user 'testipsecuser' identified by 'testing';
+grant all privileges on testipsecdb.* to 'testipsecuser';
+
+-- app database
+
+use test1;
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: test1
+--
+drop table if exists payment;
+drop table if exists certificate;
+drop table if exists subscription;
+drop table if exists users;
+
+CREATE TABLE users (
+    username varchar(30) NOT NULL primary key,
+    password varbinary(256) NOT NULL, -- password varchar(64) NOT NULL,
+    salt varbinary(64) NOT NULL -- salt varchar(16) NOT NULL
+);
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES ('apiuser',0x0083E0069FAE0845B3A45AC8ABED8C8C68F05033494B1B4A5226F2562D9E3120,0xBF3CED69DEA1E99D);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Name: subscription; Type: TABLE; Schema: public; Owner: test1
+--
+CREATE TABLE subscription (
+    duration integer NOT NULL,
+    price numeric(11,8) NOT NULL,
+    username varchar(30) NOT NULL,
+    id integer unsigned NOT NULL auto_increment,
+    date_created timestamp NOT NULL,
+    primary key (id),
+    FOREIGN KEY (username) REFERENCES users(username)
+);
+
+
+--
+-- Name: certificate; Type: TABLE; Schema: public; Owner: test1
+--
+CREATE TABLE certificate (
+    id integer unsigned not null auto_increment,
+    date_initiated timestamp,
+    csr_text varchar(4096) NOT NULL,
+    signed boolean NOT NULL,
+    cert_text varchar(4096),
+    revoked boolean,
+    serial bigint,
+    subscription integer unsigned NOT NULL,
+    date_created timestamp NOT NULL,
+    primary key (id),
+    constraint FK_SubscriptionCertificate
+    FOREIGN KEY (subscription) REFERENCES subscription(id)
+);
+
+
+--
+-- Name: payment; Type: TABLE; Schema: public; Owner: test1
+--
+CREATE TABLE payment (
+    id integer unsigned not null auto_increment primary key,
+    date_initiated timestamp,
+    amount numeric(11,8),
+    receiving_address varchar(40) NOT NULL,
+    date_confirm_1 timestamp,
+    date_confirm_3 timestamp,
+    date_confirm_6 timestamp,
+    subscription integer unsigned NOT NULL,
+    in_error boolean NOT NULL,
+    date_created timestamp NOT NULL,
+    amount_expecting numeric(11,8) NOT NULL,
+    unique (receiving_address),
+    FOREIGN KEY (subscription) REFERENCES subscription(id)
+);
+
+-- strongswan database
+
+use testipsecdb;
+
 DROP TABLE IF EXISTS `identities`;
 
 CREATE TABLE `identities` (

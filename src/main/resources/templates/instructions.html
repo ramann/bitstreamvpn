@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
+<body>
+<header th:replace="layout :: header">
+</header>
+
+<div class="container" th:fragment="content">
+    Install Strongswan
+    <pre>
+        sudo apt-get update &amp;&amp; sudo apt-get install strongswan
+    </pre>
+
+    Replace /etc/ipsec.conf with:
+    <pre>
+        config setup
+            charondebug="ike 2, cfg 2"
+
+        conn vpn
+            rightsubnet=0.0.0.0/0
+            keyexchange=ikev2
+            auto=add
+            right=104.236.219.189
+            leftsourceip=%modecfg
+            rightcert=vpn_server.pem
+            leftcert=vpn_client.pem
+    </pre>
+
+    Create /etc/ipsec.d/certs/vpn-server.pem with:
+    <pre>
+        -----BEGIN CERTIFICATE-----
+        MIIC/jCCAeagAwIBAgIIZP8glzbNhu8wDQYJKoZIhvcNAQELBQAwLTELMAkGA1UE
+        BhMCVVMxDTALBgNVBAoTBHRlc3QxDzANBgNVBAMTBnRlc3RDQTAeFw0xNzA4MzAy
+        MzQ4MzJaFw0yMDA4MjkyMzQ4MzJaMCwxCzAJBgNVBAYTAlVTMQ0wCwYDVQQKEwR0
+        ZXN0MQ4wDAYDVQQDEwVwZWVyMjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC
+        ggEBAOnv4UknaEDN+JtcxtDd7A6nxv2lajeLez92gMGlNj1qGJw13NIDSnFOzrjM
+        WshHDBZuxrlSjPTL+vTFzwB7Bws4EzVYbY055KSI55tZL5cnqR5cQ5KFdBRuipV+
+        V1Ea91W8tFp+ZjOordA5dVYYjBL1QsEuL5FnjulduFCKGI+hHuaHj/bKg96eyU1d
+        gy+wQ9bicIhcjxZJIptFeC2zov0to/kWcuAu5eQNbFpPsLOgWJFUF9fJQqH6zqke
+        5bLIo12s4P65+4zfZ5VywNlpd339/vuVIvSiA3Do0FmY8vNgB1U5lvVLWOzwan3D
+        Q7H9ififCbm+yF2XY/HDEj2au9ECAwEAAaMjMCEwHwYDVR0jBBgwFoAUJIXWwT6n
+        z38l9KGKtdRmHqAoKngwDQYJKoZIhvcNAQELBQADggEBALdoTvidWDZikY0uQ1Ji
+        bXX/F21Pb1ojIQ7GU8rtnElJLVcTTPgDAnrBARDNOvgBlrknZ+kEts9p1w/4i61b
+        vVaO2/kU+FQB+kj8cRPLNjQTNwxx/NgkXYVmtlRcGiCllrsY6FTqQJYE3wZOvo5l
+        9mrKbWT1WkK2eBJSK85xIkz4hfi1J5f4HNC1FfCM6sm809Getwesw5Yc/tnXzhJ0
+        ZDyp+baM+dni5LiHzgJ325De1HjGT5IVbuPld6NY4HjZQqKrDqT6WWaIOtJ1+P4u
+        YEVfbwxfCQWon7Y/c5hob6TKUe6/geSOlZPwN8ZRunrQflWmeHp561/yTOqBmlO3
+        svs=
+        -----END CERTIFICATE-----
+    </pre>
+
+    Replace /etc/ipsec.secrets with:
+    <pre>
+        : RSA vpn_client_key.pem
+    </pre>
+
+    Generate a private key and a certificate signing request:
+    <pre>
+        sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
+        sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=peer1'
+    </pre>
+
+    Paste the certificate signing request in your subscription's certificates page. Submit.
+
+    Paste the resulting certificate into /etc/ipsec.d/certs/vpn_client.pem
+
+    Start the service:
+    <pre>
+        sudo ipsec start
+        sudo ipsec up vpn
+    </pre>
+
+</div>
+
+</body>
+</html>

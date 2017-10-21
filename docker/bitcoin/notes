@@ -1,0 +1,6 @@
+# we use this on the host machine to test sending bitcoin
+ ~/bitcoin-0.14.2/bin/bitcoin-qt -datadir=/home/ubtc/bob-datadir -port=19444 -rpcport=19332 -rpcuser=bob -rpcpassword=bobpass -connect=172.17.0.4:18333 -regtest -server -listen -debug
+
+# we can generate a block wih this
+~/bitcoin-0.14.2/bin/bitcoin-cli -regtest -rpcport=19332 -rpcuser=bob -rpcpassword=bobpass generate 1
+

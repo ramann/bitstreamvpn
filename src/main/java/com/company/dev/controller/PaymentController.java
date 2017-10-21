@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.support.BasicAuthorizationInterceptor;
@@ -83,7 +84,7 @@ public class PaymentController {
                     new BasicAuthorizationInterceptor("alice", "alicepass"));
             String newAddress = null;
             try {
-                newAddress = restTemplate.postForObject("http://127.0.0.1:19332", request, String.class);
+                newAddress = restTemplate.postForObject("http://bitcoin:18332", request, String.class);
             } catch (Exception e) {
                 logger.error("Failed to connect to wallet when trying to getnewaddress.",e);
                 return ""; // TODO make a nice 500 page

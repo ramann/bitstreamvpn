@@ -60,6 +60,7 @@
     </div>
 <!-- th:unless="${processingPaymentsSize > 0}" -->
     <form th:unless="${processingPaymentsSize > 0}" th:action="@{/addPayment}" method="post">
+        You will have 10 minutes to submit a payment, once you click this button.
         <input type="hidden" name="subscriptionId" th:value="${subscriptionId}"/>
         <input class="btn" type="submit" value="add payment" />
     </form>

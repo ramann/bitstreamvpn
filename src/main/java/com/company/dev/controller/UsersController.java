@@ -26,6 +26,7 @@ import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Set;
 
 import static java.lang.System.out;
@@ -101,6 +102,12 @@ public class UsersController {
         return "accountcreated";
     }
 
+    @RequestMapping(method=RequestMethod.GET, value="instructions")
+    public String instructions(Model model, HttpSession session) {
+        logger.info("/instructions");
+        return "instructions";
+    }
+
     @RequestMapping(method=RequestMethod.GET, value = "/")
     public String index(String filename, Model model) {
         String msg = "-------------------------- TESTING LOG ENTRY --------------------------";
@@ -147,9 +154,9 @@ public class UsersController {
         if (usersDao.findByUsername(username) != null) {
             logger.debug("username: " + username + ", password: " + password);
             Users user = usersDao.findByUsername(username);
-            String hashedPassword = Util.getHashedPassword(password, user.getSalt());
+            byte[] hashedPassword = Util.getHashedPassword(password, user.getSalt());
 
-            if (!hashedPassword.equals(user.getPassword())) {
+            if (!Arrays.equals(hashedPassword,user.getPassword())) {
                 logger.warn("invalid login");
                 return "redirect:/login";
             }
@@ -162,7 +169,7 @@ public class UsersController {
             SecureRandom random = new SecureRandom();
             byte slt[] = new byte[8];
             random.nextBytes(slt);
-            Util.getHashedPassword(password, Base64.encodeBase64String(slt));
+            Util.getHashedPassword(password, slt);
 
             logger.warn("User not found");
             return "redirect:/login";

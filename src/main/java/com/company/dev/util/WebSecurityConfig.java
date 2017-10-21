@@ -31,7 +31,8 @@ public class WebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
             http
                     .authorizeRequests()
                     .antMatchers("/", "/create", "/greeting", "/css/**", "/fonts/**", "/images/**",
-                    "/js/**", "/header", "/footer", "/layout", "/task", "/generatecaptcha", "/createaccount", "/enterpayment", "/accountcreated")
+                    "/js/**", "/header", "/footer", "/layout", "/task", "/generatecaptcha", "/createaccount",
+                            "/enterpayment", "/accountcreated", "/instructions")
                     .permitAll() //.anyRequest().permitAll(); //.and().csrf().disable();
                     .anyRequest()
                     .authenticated()

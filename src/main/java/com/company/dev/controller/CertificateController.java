@@ -9,7 +9,6 @@ import com.company.dev.model.app.repo.UsersDao;
 import com.company.dev.model.ipsec.domain.*;
 import com.company.dev.model.ipsec.repo.*;
 import com.company.dev.util.ForbiddenException;
-import com.company.dev.util.IpsecCertUtil;
 import com.company.dev.util.Util;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -36,10 +35,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -69,9 +71,9 @@ public class CertificateController {
         if(usersDao.findByUsername(principal.getName()) != null) {
             logger.debug("password: "+password);
             Users user = usersDao.findByUsername(principal.getName());
-            String hashedPassword = Util.getHashedPassword(password, user.getSalt());
+            byte[] hashedPassword = Util.getHashedPassword(password, user.getSalt());
 
-            if ( !hashedPassword.equals(user.getPassword())) {
+            if (!Arrays.equals(hashedPassword, user.getPassword())) {
                 logger.warn("invalid password when trying to delete cert");
                 session.setAttribute("invalidPassword",true);
                 return "redirect:/deleteCert?serial="+serial;
@@ -89,7 +91,7 @@ public class CertificateController {
             PemObject pemObjectCert = pemReaderCert.readPemObject();
             X509CertificateHolder x509CertificateHolder = new X509CertificateHolder(pemObjectCert.getContent());
             X509Certificate x509Certificate =  new JcaX509CertificateConverter().setProvider( "BC" ).getCertificate( x509CertificateHolder );
-            logger.info("did we delete? "+ IpsecCertUtil.deleteIpsecRecordsForClient(x509Certificate));
+            logger.info("did we delete? "+ deleteIpsecRecordsForClient(x509Certificate));
             certificateDao.delete(cert);
             logger.info("we've deleted...");
             //logger.debug(prettyPrintCrl(Base64.encodeBase64String(x509CRLHolder.getEncoded())));
@@ -236,7 +238,7 @@ public class CertificateController {
             savedCert = certificateDao.save(Certificate);
             logger.info("getName: "+reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
 
-            IpsecCertUtil.insertIpsecRecordsForClient(x509Certificate, keystoreLocation);
+            insertIpsecRecordsForClient(x509Certificate, keystoreLocation);
         } catch (Exception e) {
             out.println("Exception: "+e);
             return "Arghh!"; //create a nice error page.
@@ -248,7 +250,142 @@ public class CertificateController {
         //return "redirect:/myaccount"; //?purchaseId="+purchaseId;
     }
 
+    String deleteIpsecRecordsForClient(X509Certificate x509Certificate) {
+        logger.warn("entered deleteIpsecRecordsForClient");
+        String ret = "starting";
+        X500Name x500name = subjBytesToX500Name(x509Certificate.getSubjectX500Principal().getEncoded());
+        try {
+            Identities identitiesSubject = identitiesDao.findByData(x500name.getEncoded());
+            Certificates certificates = certificatesDao.findByData(x509Certificate.getEncoded());
+            logger.warn("identity id: "+identitiesSubject.getId());
+            logger.warn("certificates id: "+certificates.getId());
 
+/* todo: why doesn't this work?
+             * certificateIdentityDao.findByCertificateAndIdentity(identitiesSubject.getId(), certificates.getId());
+             */
+
+            CertificateIdentity ci = certificateIdentityDao.findByCertificate(certificates.getId());
+            logger.warn("ci: "+ci.getCertificate()+", "+ci.getIdentity());
+            certificateIdentityDao.delete(ci);
+            PeerConfigs peerConfigs = peerConfigsDao.findByRemoteId(Integer.toString(identitiesSubject.getId()));
+            PeerConfigChildConfig peerConfigChildConfig = peerConfigChildConfigDao.findByPeerCfg(peerConfigs.getId());
+
+            ChildConfigs childConfigs = childConfigsDao.findById(peerConfigChildConfig.getChildCfg());
+            List<ChildConfigTrafficSelector> childConfigTrafficSelectors = childConfigTrafficSelectorDao.findByChildCfg(childConfigs.getId());
+
+            for (ChildConfigTrafficSelector c : childConfigTrafficSelectors) {
+                trafficSelectorsDao.delete(trafficSelectorsDao.findById(c.getTrafficSelector()));
+                childConfigTrafficSelectorDao.delete(c);
+            }
+            childConfigsDao.delete(childConfigs);
+            peerConfigChildConfigDao.delete(peerConfigChildConfig);
+            ikeConfigsDao.delete(ikeConfigsDao.findById(peerConfigs.getIkeCfg()));
+            peerConfigsDao.delete(peerConfigs);
+            certificatesDao.delete(certificates);
+            identitiesDao.delete(identitiesSubject);
+
+            ret = "did work";
+            return ret;
+        } catch (Exception e) {
+            logger.error("didn't delete",e);
+        }
+        return "we shouldn't have gotten here";
+    }
+
+    void insertIpsecRecordsForClient(X509Certificate x509Certificate, String keystoreLocation) {
+        logger.info("entered insertIpsecRecordsForClient");
+        logger.info("is x509Certificate null? "+(x509Certificate == null));
+        logger.info("keystoreLocation: "+keystoreLocation);
+
+        try {
+            logger.info("entered try block");
+            // using X500Name
+            X500Name x500name = subjBytesToX500Name(x509Certificate.getSubjectX500Principal().getEncoded());//new X500Name(reverseSubject(x509Certificate.getSubjectX500Principal().getName()));
+            logger.info("cert subj: " + DatatypeConverter.printHexBinary(x500name.getEncoded())+
+                    ", cert: "+ DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
+
+            Identities identities = new Identities((byte) 9, x500name.getEncoded());
+            Identities savedIdentities = identitiesDao.save(identities);
+            logger.info("done with saved identites");
+            logger.info("savedIdentities is null? "+(savedIdentities == null));
+
+            Certificates certificates = new Certificates((byte) 1, (byte) 1, x509Certificate.getEncoded());
+            Certificates savedCertificates = certificatesDao.save(certificates);
+            logger.info("done with saved certificates");
+            logger.info("savedCertificates is null? "+(savedCertificates == null));
+
+            CertificateIdentity certificateIdentity = new CertificateIdentity(savedCertificates.getId(), savedIdentities.getId());
+            CertificateIdentity savedCertificateIdentity = certificateIdentityDao.save(certificateIdentity);
+
+            IkeConfigs ikeConfigs = new IkeConfigs(performNSLookup("strongswan"), "0.0.0.0"); // new IkeConfigs("104.236.219.189", "0.0.0.0");
+            IkeConfigs savedIkeConfigs = ikeConfigsDao.save(ikeConfigs);
+
+            X509Certificate serverCert = getServerCert(keystoreLocation);
+            X500Name serverX500Name = subjBytesToX500Name(serverCert.getSubjectX500Principal().getEncoded());
+/* new X500Name(reverseSubject(serverCert.getSubjectX500Principal().getName()));*/
+
+            Identities savedServerSubjectIdentity = identitiesDao.findByData(serverX500Name.getEncoded());
+
+            PeerConfigs peerConfigs = new PeerConfigs("rw",
+                    savedIkeConfigs.getId(),
+                    Integer.toString(savedServerSubjectIdentity.getId()),
+                    Integer.toString(savedIdentities.getId()),
+                    "bigpool");
+            PeerConfigs savedPeerConfigs = peerConfigsDao.save(peerConfigs);
+
+            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/libexec/ipsec/_updown iptables"); // TODO: this script should be default
+            ChildConfigs savedChildConfigs = childConfigsDao.save(childConfigs);
+
+            PeerConfigChildConfig peerConfigChildConfig = new PeerConfigChildConfig(savedPeerConfigs.getId(), savedChildConfigs.getId());
+            PeerConfigChildConfig savedPeerConfigChildConfig = peerConfigChildConfigDao.save(peerConfigChildConfig);
+
+            byte[] startAddr = DatatypeConverter.parseHexBinary("00000000");
+            byte[] endAddr = DatatypeConverter.parseHexBinary("ffffffff");
+            TrafficSelectors trafficSelectorLocal = new TrafficSelectors((byte)7, startAddr, endAddr);
+            TrafficSelectors savedTrafficSelectorLocal = trafficSelectorsDao.save(trafficSelectorLocal);
+
+            TrafficSelectors trafficSelectorRemote = new TrafficSelectors((byte)7);
+            TrafficSelectors savedTrafficSelectorRemote = trafficSelectorsDao.save(trafficSelectorRemote);
+
+            ChildConfigTrafficSelector childConfigTrafficSelectorLocal = new ChildConfigTrafficSelector(savedChildConfigs.getId(),
+                    savedTrafficSelectorLocal.getId(), (byte)0);
+            ChildConfigTrafficSelector savedChildConfigTrafficSelectorLocal = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorLocal);
+
+            ChildConfigTrafficSelector childConfigTrafficSelectorRemote = new ChildConfigTrafficSelector(savedChildConfigs.getId(),
+                    savedTrafficSelectorRemote.getId(), (byte)3);
+            ChildConfigTrafficSelector savedChildConfigTrafficSelectorRemote = childConfigTrafficSelectorDao.save(childConfigTrafficSelectorRemote);
+
+        } catch (Exception e) {
+            logger.error("exception in insertIpsecRecordsForClient",e);
+        }
+    }
+
+    @Autowired
+    private CertificatesDao certificatesDao;
+
+    @Autowired
+    private CertificateIdentityDao certificateIdentityDao;
+
+    @Autowired
+    private IkeConfigsDao ikeConfigsDao;
+
+    @Autowired
+    private PeerConfigsDao peerConfigsDao;
+
+    @Autowired
+    private ChildConfigsDao childConfigsDao;
+
+    @Autowired
+    private PeerConfigChildConfigDao peerConfigChildConfigDao;
+
+    @Autowired
+    private TrafficSelectorsDao trafficSelectorsDao;
+
+    @Autowired
+    private ChildConfigTrafficSelectorDao childConfigTrafficSelectorDao;
+
+    @Autowired
+    private IdentitiesDao identitiesDao;
 
     @Autowired
     UsersDao usersDao;

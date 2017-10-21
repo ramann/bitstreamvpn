@@ -38,6 +38,8 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -54,6 +56,22 @@ public class Util {
 
     // let's say 0.02 USD/hour
     public static final double pricePerUnit = 0.02;
+
+    public static String performNSLookup(String name) {
+        InetAddress inetHost = null;
+        String ret;
+        try {
+            inetHost = InetAddress.getByName(name);
+            String hostName = inetHost.getHostName();
+            logger.info("The host name was: " + hostName);
+            logger.info("The hosts IP address is: " + inetHost.getHostAddress());
+            ret = inetHost.getHostName();
+        } catch(UnknownHostException ex) {
+            logger.error("Unrecognized host",ex);
+            ret = "104.236.219.189"; //"172.18.0.5"; //TODO: fix this logic
+        }
+        return ret;
+    }
 
     public static String errorText(String objectName, String objectValue) {
         objectName = objectName.substring(objectName.lastIndexOf('.') + 1).trim();
@@ -72,14 +90,15 @@ public class Util {
         return new Timestamp(cal.getTimeInMillis());
     }
 
-    public static String getHashedPassword(String password, String salt) {
+
+    public static byte[] getHashedPassword(String password, byte[] salt) {
         long startTime = System.nanoTime();
-        byte hashedPassword[] = SCrypt.generate(password.getBytes(), Base64.decodeBase64(salt), 32768, 16, 4, 32);
+        byte hashedPassword[] = SCrypt.generate(password.getBytes(), salt, 32768, 16, 4, 32);
         long endTime = System.nanoTime();
 
         long duration = (endTime - startTime);
         System.out.println("duration: "+duration);
-        return Base64.encodeBase64String(hashedPassword);
+        return hashedPassword;
     }
 
     public static String dateToGMT(Date date) {
@@ -169,7 +188,7 @@ public class Util {
 
     /* take a Subject and convert it to use PRINTABLESTRINGs and return the X500Name */
     public static X500Name subjBytesToX500Name(byte[] subjBytes) {
-        logger.debug("entered subjBytesToX500Name with data: "+DatatypeConverter.printHexBinary(subjBytes));
+        logger.info("entered subjBytesToX500Name with data: "+DatatypeConverter.printHexBinary(subjBytes));
 
         ArrayList<RDN> rdns = new ArrayList<RDN>();
 
@@ -227,8 +246,9 @@ public class Util {
             }
             return new X500Name(rdns.toArray(new RDN[0]));
         } catch (Exception e) {
-            logger.debug("Couldn't parse subjBytes");
+            logger.error("Couldn't parse subjBytes", e);
         }
+        logger.info("leaving subjBytesToX500Name");
         return null;
     }
 
@@ -292,6 +312,6 @@ public class Util {
         SecureRandom random = new SecureRandom();
         byte slt[] = new byte[8];
         random.nextBytes(slt);
-        Util.getHashedPassword(password, Base64.encodeBase64String(slt));
+        Util.getHashedPassword(password, slt);
     }
 }

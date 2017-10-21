@@ -16,7 +16,7 @@ apply plugin: 'docker'
 
 
 jar {
-    baseName = 'strongswan-webapp'
+    baseName = 'webapp'
     version =  '0.1.0'
 }
 
@@ -59,8 +59,11 @@ dependencies {
 //    compile("org.springframework.security:spring-security-web:4.1.3.RELEASE")
 }
 
+group='ramann'
+
 task buildDocker(type: Docker, dependsOn: build) {
-    applicationName = jar.baseName
+    applicationName = 'ipsec-vpn'
+    tagVersion = 'webapp'
     dockerfile = file('Dockerfile')
     doFirst {
         copy {

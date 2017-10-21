@@ -10,11 +10,15 @@
         <div>What are you doing here?</div>
     </div>
     <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + '. Please add a subscription below.'">Hi, username</div>
+        <div th:text=" 'Hi,' + ${username} + '.' ">Hi, username</div>
     </div>
 
     <form name="f" th:action="@{/addCert}" method="post">
-        <div>Paste in a PEM-formatted CSR.</div>
+        <div>Paste in your CSR.</div>
+        <pre>
+            sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
+            sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=peer1'
+        </pre>
         <fieldset>
             <label for="csr">CSR:</label>
             <textarea id="csr" name="csr" cols="70" rows="6"/>

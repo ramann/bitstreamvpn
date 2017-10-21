@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -29,9 +30,9 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         try {
             logger.debug("trying to authenticate: "+name);
             Users user = usersDao.findByUsername(name);
-            String hashedPassword = Util.getHashedPassword(password, user.getSalt());
+            byte[] hashedPassword = Util.getHashedPassword(password, user.getSalt());
 
-            if ( !hashedPassword.equals(user.getPassword())) {
+            if (!Arrays.equals(hashedPassword,user.getPassword())) {
                 logger.info("invalid login for "+name);
                 return null;
             }
@@ -39,7 +40,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             SecureRandom random = new SecureRandom();
             byte slt[] = new byte[8];
             random.nextBytes(slt);
-            Util.getHashedPassword(password, Base64.encodeBase64String(slt));
+            Util.getHashedPassword(password, slt);
 
             logger.info("User "+name+" not found");
             return null;

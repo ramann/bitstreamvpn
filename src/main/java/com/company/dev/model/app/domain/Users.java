@@ -11,8 +11,8 @@ import org.apache.commons.codec.binary.Base64;
 @Table(name="users")
 public class Users {
     private String username;
-    private String password;
-    private String salt;
+    private byte[] password;
+    private byte[] salt;
 
     public Users() { }
 
@@ -27,8 +27,8 @@ public class Users {
         byte salt[] = new byte[8];
         random.nextBytes(salt);
 
-        this.password = Util.getHashedPassword(password,Base64.encodeBase64String(salt));
-        this.salt = Base64.encodeBase64String(salt);
+        this.password = Util.getHashedPassword(password,salt);
+        this.salt = salt;
     }
 
 
@@ -53,22 +53,22 @@ public class Users {
     }
 
     @Basic
-    @Column(name = "password", nullable = false, length = 64)
-    public String getPassword() {
+    @Column(name = "password", nullable = false)
+    public byte[] getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(byte[] password) {
         this.password = password;
     }
 
     @Basic
-    @Column(name = "salt", nullable = false, length = 16)
-    public String getSalt() {
+    @Column(name = "salt", nullable = false)
+    public byte[] getSalt() {
         return salt;
     }
 
-    public void setSalt(String salt) {
+    public void setSalt(byte[] salt) {
         this.salt = salt;
     }
 

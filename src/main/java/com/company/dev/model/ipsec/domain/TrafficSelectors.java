@@ -20,6 +20,12 @@ public class TrafficSelectors {
         this.type = type;
     }
 
+    public TrafficSelectors(byte type, byte[] startAddr, byte[] endAddr) {
+        this.type = type;
+        this.startAddr = startAddr;
+        this.endAddr = endAddr;
+    }
+
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
