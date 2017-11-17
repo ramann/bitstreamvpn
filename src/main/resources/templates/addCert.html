@@ -5,19 +5,28 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <div>What are you doing here?</div>
+<main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Certificates</h1>
+            <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+        </div>
     </div>
-    <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + '.' ">Hi, username</div>
-    </div>
+
+    <div class="container">
+        <div class="row">
+
 
     <form name="f" th:action="@{/addCert}" method="post">
         <div>Paste in your CSR.</div>
         <pre>
             sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
             sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=peer1'
+        </pre>
+        <pre th:text="'subject: '+${subject}">
+
         </pre>
         <fieldset>
             <label for="csr">CSR:</label>
@@ -31,5 +40,7 @@
         </div>
     </form>
 </div>
+    </div>
+</main>
 </body>
 </html>

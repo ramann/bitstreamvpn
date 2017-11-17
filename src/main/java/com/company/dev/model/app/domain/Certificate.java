@@ -16,8 +16,14 @@ public class Certificate {
     private Long serial;
     private Subscription subscription;
     private Timestamp dateCreated;
+    private String subject;
 
     public Certificate() {}
+
+    public Certificate(String subject, Subscription subscription) {
+        this.subject = subject;
+        this.subscription = subscription;
+    }
 
     public Certificate(Certificate c) {  // clone?
         this.id = c.getId();
@@ -29,6 +35,7 @@ public class Certificate {
         this.serial = this.getSerial();
         this.subscription = this.getSubscription();
         this.dateCreated = this.getDateCreated();
+        this.subject = this.getSubject();
     }
 
     public Certificate(Timestamp dateCreated, String csrText, boolean signed, Subscription subscription, Long serial) {
@@ -110,6 +117,17 @@ public class Certificate {
     public void setCertText(String certText) {
         this.certText = certText;
     }
+
+    @Basic
+    @Column(name = "subject", nullable = true, length = 100)
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
 
     @Basic
     @Column(name = "revoked", nullable = true)

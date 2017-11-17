@@ -4,8 +4,18 @@
 <body>
 <header th:replace="layout :: header">
 </header>
+<main role="main">
 
-<div class="container" th:fragment="content">
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Login</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+
     <form name="f" th:action="@{/login}" method="post">
         <fieldset>
             <legend>Please Login</legend>
@@ -25,6 +35,8 @@
         </fieldset>
     </form>
 </div>
+    </div>
+</main>
 
 </body>
 </html>

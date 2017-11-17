@@ -5,15 +5,24 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <h1>What are you doing here?</h1>
-    </div>
-    <div th:unless="${username == null}">
-        <h1 th:text=" 'Hey ' + ${username} + ', your account has been created! Now go sign in!'"></h1>
+<main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Account Created</h1>
+        </div>
     </div>
 
-</div>
+    <div class="container" th:fragment="content">
+        <div th:if="${username == null}">
+            <h1>What are you doing here?</h1>
+        </div>
+        <div th:unless="${username == null}">
+            <h1 th:text=" 'Hey ' + ${username} + ', your account has been created! Now go sign in!'"></h1>
+        </div>
+
+    </div>
 
 </body>
 </html>

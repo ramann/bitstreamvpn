@@ -5,25 +5,31 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <div>What are you doing here?</div>
-    </div>
-    <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + '. Make a payment for subscription #' + ${subscriptionId}">Hi, username</div>
-    </div>
-    <div class="alert alert-info">You have ten minutes from the creation date to make payment.
-        Payment <strong>MUST</strong> be made before the due date shown below.
-        Send <strong>one</strong> payment for the full amount.
-    </div>
-    <div th:text="'Send payment to the below address.'"></div><br/>
-    <div>Amount Due: <strong th:text="${paymentAmount}"></strong></div>
-    <div>Address: <strong th:text="${pendingPayment}"></strong></div>
-    <div>Date due: <strong th:text="${dateDue}"></strong></div>
-    <div><small>(Date created: <strong th:text="${dateCreated}"></strong>)</small></div>
+<main role="main">
 
-    <img th:src="@{/qrcode} + '?paymentId=' + ${paymentId}"/><br/>
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Add Payment</h1>
+            <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+        </div>
+    </div>
 
-</div>
+    <div class="container">
+
+        <div class="alert alert-info">You have ten minutes from the creation date to make payment.
+            Payment <strong>MUST</strong> be made before the due date shown below.
+            Send <strong>one</strong> payment for the full amount.
+        </div>
+        <div th:text="'Send payment to the below address.'"></div>
+        <div>Amount Due: <strong th:text="${paymentAmount}"></strong></div>
+        <div>Address: <strong th:text="${pendingPayment}"></strong></div>
+        <div>Date due: <strong th:text="${dateDue}"></strong></div>
+        <div>
+            <small>(Date created: <strong th:text="${dateCreated}"></strong>)</small>
+        </div>
+        <img th:src="@{/qrcode} + '?paymentId=' + ${paymentId}"/><br/>
+    </div>
+</main>
 </body>
 </html>

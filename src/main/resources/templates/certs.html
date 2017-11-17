@@ -5,17 +5,19 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <div>What are you doing here?</div>
-    </div>
-    <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + ' here are the certs for your subscription.'">Hi, username</div>
+<main role="main">
 
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Certificates</h1>
+            <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+        </div>
     </div>
 
-    <h3>Certificates</h3>
-    <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+    <div class="container">
+        <div class="row">
+
     <div th:if="${certificatesSize == 0}">You don't have any certificates associated with this subscription.</div>
 
     <table th:unless="${certificatesSize == 0}" th:classappend="table">
@@ -35,6 +37,8 @@
 
 
 </div>
+    </div>
+</main>
 
 </body>
 </html>

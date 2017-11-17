@@ -51,13 +51,14 @@ CREATE TABLE subscription (
 CREATE TABLE certificate (
     id integer unsigned not null auto_increment,
     date_initiated timestamp,
-    csr_text varchar(4096) NOT NULL,
-    signed boolean NOT NULL,
+    csr_text varchar(4096),
+    signed boolean,
     cert_text varchar(4096),
     revoked boolean,
     serial bigint,
     subscription integer unsigned NOT NULL,
-    date_created timestamp NOT NULL,
+    date_created timestamp,
+    subject varchar(100) NOT NULL,
     primary key (id),
     constraint FK_SubscriptionCertificate
     FOREIGN KEY (subscription) REFERENCES subscription(id)
@@ -79,6 +80,9 @@ CREATE TABLE payment (
     in_error boolean NOT NULL,
     date_created timestamp NOT NULL,
     amount_expecting numeric(11,8) NOT NULL,
+    bandwidth BIGINT UNSIGNED DEFAULT 0,
+    date_start TIMESTAMP,
+    date_end TIMESTAMP,
     unique (receiving_address),
     FOREIGN KEY (subscription) REFERENCES subscription(id)
 );
@@ -86,6 +90,16 @@ CREATE TABLE payment (
 -- strongswan database
 
 use testipsecdb;
+
+drop table if exists `bandwidth`; -- rename this, it just maps nflog group number (id) to peer's subject (peer_id)
+create table `bandwidth` (
+  `id` SMALLINT(2) unsigned not null AUTO_INCREMENT, -- nflog group number
+  `peer_id` VARCHAR(100) NOT NULL,
+  `virtual_ip` VARCHAR(40) NOT NULL,
+  `ipsec_policy_in` VARCHAR(100) NOT NULL,
+  `ipsec_policy_out` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`)
+);
 
 DROP TABLE IF EXISTS `identities`;
 

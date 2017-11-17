@@ -1,8 +1,10 @@
 package com.company.dev.controller;
 
 import com.company.dev.model.app.domain.Payment;
+import com.company.dev.model.app.domain.Subscription;
 import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
+import com.company.dev.util.TimeSpan;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import java.security.Principal;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import static com.company.dev.util.Util.addDuration;
 
@@ -27,6 +30,44 @@ public class RestfulController {
 
     @Autowired
     private PaymentDao paymentDao;
+
+    public void setStartAndEndDates(Subscription subscription) {
+        List<Payment> payments = paymentDao.findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(subscription);
+
+        for(int i=0; i<payments.size(); i++) {
+            if (payments.get(i).getDateStart() == null || payments.get(i).getDateEnd() == null) {
+                Timestamp thisDateConfirm1 = payments.get(i).getDateConfirm1();
+                Timestamp thisDateConfirm1PlusDuration = addDuration(thisDateConfirm1, subscription.getDuration(), Calendar.HOUR_OF_DAY);
+
+                if (i == 0) { // if this is the first payment
+                    if (payments.get(i).getDateStart() == null)
+                        payments.get(i).setDateStart(thisDateConfirm1);
+
+                    if (payments.get(i).getDateEnd() == null)
+                        payments.get(i).setDateEnd(thisDateConfirm1PlusDuration);
+                } else {
+                    if (thisDateConfirm1.before(payments.get(i - 1).getDateEnd())) {
+                        Timestamp begin = payments.get(i - 1).getDateEnd();
+                        Timestamp end = addDuration(payments.get(i - 1).getDateEnd(), subscription.getDuration(), Calendar.HOUR_OF_DAY);
+
+                        if (payments.get(i).getDateStart() == null)
+                            payments.get(i).setDateStart(begin);
+
+                        if (payments.get(i).getDateEnd() == null)
+                            payments.get(i).setDateEnd(end);
+                        //timeSpans.add(new TimeSpan(begin, end));
+                    } else {
+                        if (payments.get(i).getDateStart() == null)
+                            payments.get(i).setDateStart(thisDateConfirm1);
+
+                        if (payments.get(i).getDateEnd() == null)
+                            payments.get(i).setDateEnd(thisDateConfirm1PlusDuration);
+                        //timeSpans.add(new TimeSpan(thisDateConfirm1, thisDateConfirm1PlusDuration));
+                    }
+                }
+            }
+        }
+    }
 
     @RequestMapping(method=RequestMethod.POST, value="/updateConfirmations")
     public void updateConfirmations(Principal principal, String json) {
@@ -77,6 +118,7 @@ public class RestfulController {
 
                 if (confirmations >= 1 && payment.getDateConfirm1()==null) {
                     payment.setDateConfirm1(new Timestamp(new Date().getTime()));
+                    setStartAndEndDates(payment.getSubscription());
                     logger.info("updateConfirmations setDateConfirm1: "+payment.getDateConfirm1());
                 }
                 if (confirmations >= 3 && payment.getDateConfirm3()==null) {
@@ -135,6 +177,7 @@ public class RestfulController {
         }
         if (confirmations >= 1 && payment.getDateConfirm1()==null) {
             payment.setDateConfirm1(new Timestamp(new Date().getTime()));
+            setStartAndEndDates(payment.getSubscription());
             logger.info("setDateConfirm1: "+payment.getDateConfirm1());
         }
         if (confirmations >= 3 && payment.getDateConfirm3()==null) {
@@ -164,6 +207,12 @@ public class RestfulController {
 
         payment.setAmount(amountReceived);
         paymentDao.save(payment);
+
+    }
+
+
+    @RequestMapping(method = RequestMethod.POST, value="/updateBandwidth")
+    public void updateBandwidth(Principal principal, String id, BigDecimal totalBytes) {
 
     }
 }

@@ -31,6 +31,8 @@ public interface PaymentDao extends CrudRepository<Payment, Long> {
     public List<Payment> findBySubscriptionAndSubscription_UsersAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalseOrderByDateCreatedAsc(
             Subscription subscription, Users users);
 
+    public List<Payment> findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(Subscription subscription);
+
     public List<Payment> findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
             Subscription subscription, Users users);
 

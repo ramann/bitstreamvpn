@@ -77,7 +77,7 @@ public class UsersController {
             model.addAttribute("username", username);
         }
         if(appDev || errors) {
-            return "createaccount";
+            return "signin";
         }
 
         Users user = null;
@@ -147,6 +147,12 @@ public class UsersController {
         return "login";
     }
 
+    @RequestMapping(method=RequestMethod.GET, value = "/signin")
+    public String signIn(Model model) {
+        logger.info("GET /signin");
+        return "signin";
+    }
+
     @RequestMapping(method=RequestMethod.POST, value = "/login")
     public String loginPost(String username, String password, HttpSession session, Model model) {
         logger.info("POST /login");
@@ -174,7 +180,7 @@ public class UsersController {
             logger.warn("User not found");
             return "redirect:/login";
         }
-        return "viewproducts";
+        return "redirect:/myaccount";
     }
 
     /**

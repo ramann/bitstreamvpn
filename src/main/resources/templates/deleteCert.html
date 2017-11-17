@@ -5,41 +5,38 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
+
+<main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Add Payment</h1>
+            <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+
     <div class="alert alert-danger" th:if="${invalidPassword} != null">You entered an <strong>invalid password</strong> when trying to delete.</div>
 
-    <div th:if="${username == null}">
-        <div>What are you doing here? This is for cert deletions only.</div>
-    </div>
-    <div th:unless="${username == null}">
-        <div th:text=" 'Hi ' + ${username} + '. You must be here to delete a cert.'">Hi, username</div>
-        <pre th:text="${certInfo}">certificate text</pre>
-    </div>
+            <pre th:text="${certInfo}">certificate text</pre>
 
     <form name="f" th:action="@{/deleteCert}" method="post">
         <fieldset>
             <label for="password">Please confirm your password</label>
             <input type="password" id="password" name="password"/><br/>
-<!--            <label>Select a revocation reason:</label>
-            <input type="radio" name="reason" value="1">Key Compromise</input>
-            <input type="radio" name="reason" value="5">Cessation of Operation</input>
-            <input type="radio" name="reason" value="0">Unspecified</input>
-            <p th:if="${reason_error} != null" th:text="${reason_error}">reason error</p><br/>-->
             <input type="hidden" name="serial" th:value="${certificate.serial}"/>
         </fieldset>
 
-<!--        <fieldset>
-            <legend>CAPTCHA</legend>
-            <img th:src="@{/generatecaptcha}"/>
-            <label for="captcha">Captcha:</label>
-            <input type="text" id="captcha" name="captcha"/>
-            <p th:if="${captcha_error} != null" th:text="${captcha_error}"></p><br/><br/><br/>
-        </fieldset>-->
         <div class="form-actions">
             <button type="submit" class="btn">Delete</button>
         </div>
     </form>
 </div>
+    </div>
+</main>
 
 </body>
 </html>

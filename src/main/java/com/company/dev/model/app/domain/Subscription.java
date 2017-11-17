@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity

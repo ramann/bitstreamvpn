@@ -32,7 +32,7 @@ public class WebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
                     .authorizeRequests()
                     .antMatchers("/", "/create", "/greeting", "/css/**", "/fonts/**", "/images/**",
                     "/js/**", "/header", "/footer", "/layout", "/task", "/generatecaptcha", "/createaccount",
-                            "/enterpayment", "/accountcreated", "/instructions")
+                            "/enterpayment", "/accountcreated", "/instructions", "/signin")
                     .permitAll() //.anyRequest().permitAll(); //.and().csrf().disable();
                     .anyRequest()
                     .authenticated()

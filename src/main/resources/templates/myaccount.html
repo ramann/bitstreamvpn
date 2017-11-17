@@ -5,53 +5,47 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${subscriptionAdded}" class="alert alert-success">You've <strong>added</strong> a subscription.</div>
-    <div th:if="${subscriptionDeleted}" class="alert alert-success">You've <strong>deleted</strong> a subscription.</div>
-    <h3 th:if="${username == null}">What are you doing here?</h3>
-    <h3 th:unless="${username == null}" th:text="'Hi ' + ${username} + ', Welcome to your account.'">Hi, username</h3>
+    <main role="main">
 
-    <div th:if="${subscriptionsSize == 0}">There are no subscriptions associated with your account</div>
-    <div th:unless="${subscriptionsSize == 0}">
-        <h3>Subscriptions</h3>
-        <table th:classappend="table">
-            <tr>
-                <!--<th>Title</th>-->
-                <th>ID</th>
-                <th>Status</th>
-                <th>Duration (days)</th>
-                <th>Price (USD)</th>
-                <th>Payments</th>
-                <th>Certificates</th>
-            </tr>
-            <tr th:each="sp : ${subscriptionPresentations}">
-                <td th:text="${sp.id}"></td>
-                <td th:if="${sp.active}" th:text="${sp.desc}"></td>
-                <td th:unless="${sp.active}">inactive</td>
-                <td th:text="${sp.duration}"></td>
-                <td th:text="${sp.price}"></td>
-                <td><a th:href="'/payments?subscriptionId='+${sp.id}">payments</a></td>
-                <td><a th:href="'/certs?subscriptionId='+${sp.id}">certificates</a></td>
-            </tr>
-            <!--<tr th:each="subscription : ${subscriptions}">
-                <td th:text="${subscription.title}"></td>
-                <td th:text="${subscription.duration}"></td>
-                <td th:text="${subscription.price}"></td>
-                <td><a th:href="'/paymentHistory?subscriptionId='+${subscription.id}">payments</a></td>
-                <td><a th:href="'/certs?subscriptionId='+${subscription.id}">certificates</a></td>
-            </tr>-->
-        </table>
-    </div>
-    <a th:href="@{/addSubscription}">add a subscription</a>
+        <!-- Main jumbotron for a primary marketing message or call to action -->
+        <div class="jumbotron">
+            <div class="container">
+                <h1 class="display-5">Subscriptions</h1>
+            </div>
+        </div>
 
+        <div class="container">
 
+            <div th:if="${subscriptionAdded}" class="alert alert-success">You've <strong>added</strong> a subscription.</div>
+            <div th:if="${subscriptionDeleted}" class="alert alert-success">You've <strong>deleted</strong> a subscription.</div>
 
+            <div th:if="${subscriptionsSize == 0}">There are no subscriptions associated with your account</div>
+            <div th:unless="${subscriptionsSize == 0}">
+                <table th:classappend="table">
+                    <tr>
+                        <th>ID</th>
+                        <th>Status</th>
+                        <th>Duration (days)</th>
+                        <th>Price (USD)</th>
+                        <th>Payments</th>
+                        <th>Certificates</th>
+                    </tr>
+                    <tr th:each="sp : ${subscriptionPresentations}">
+                        <td th:text="${sp.id}"></td>
+                        <td th:if="${sp.active}" th:text="${sp.desc}"></td>
+                        <td th:unless="${sp.active}">inactive</td>
+                        <td th:text="${sp.duration}"></td>
+                        <td th:text="${sp.price}"></td>
+                        <td><a th:href="'/payments?subscriptionId='+${sp.id}">payments</a></td>
+                        <td><a th:href="'/certs?subscriptionId='+${sp.id}">certificates</a></td>
+                    </tr>
 
+                </table>
+            </div>
 
-    <!--  <div th:unless="${paymentsSize > 0}"><h1>Looks like you've never made a payment. Better get on that &ndash;&gt; <a href="#" th:href="@{/enterpayment}">Initiate payment</a></h1></div>
+            <a th:href="@{/addSubscription}">add a subscription</a>
 
-  -->
-</div>
-
+        </div>
+    </main>
 </body>
 </html>

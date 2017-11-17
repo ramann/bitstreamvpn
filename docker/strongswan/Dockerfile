@@ -1,6 +1,6 @@
 FROM buildpack-deps:xenial
 
-RUN apt-get update && apt-get install -y haveged curl libgmp-dev module-init-tools netcat && apt-get upgrade -y
+RUN apt-get update && apt-get install -y haveged curl libgmp-dev module-init-tools netcat iptables python-mysqldb && apt-get upgrade -y
 
 ENV STRONGSWAN_VERSION 5.6.0
 ENV GPG_KEY 948F158A4E76A27BF3D07532DF42C170B34DBA77
@@ -23,9 +23,13 @@ RUN mkdir -p /usr/src/strongswan \
 	    --enable-attr-sql \
 	&& make -j \
 	&& make install \
-    && rm -rf "/usr/src/strongswan*"
+    && rm -rf "/usr/src/strongswan*" \
+    && mkdir -p /usr/local/bin/ipsec
 
 ADD strongswan.conf /etc/strongswan.conf
+ADD insert.py /usr/local/bin/ipsec/insert.py
+ADD update_bandwidth.py /usr/local/bin/ipsec/update_bandwidth.py
+ADD _updown /usr/local/bin/ipsec/_updown
 
 EXPOSE 4500/udp 500/udp
 

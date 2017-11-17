@@ -22,6 +22,8 @@ import java.util.List;
 public interface CertificateDao extends CrudRepository<Certificate, Long> {
 
     public List<Certificate> findBySubscriptionAndSubscription_UsersOrderByDateCreated(Subscription subscription, Users users);
+    public List<Certificate> findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(Subscription subscription, Users users);
     public Certificate findBySerialAndSubscription_Users(long serial, Users users);
+    public Certificate findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(Subscription subscription);
 
 } // class UserDao

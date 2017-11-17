@@ -45,7 +45,7 @@ public class SubscriptionController {
                 new Users(principal.getName()), new Timestamp(new Date().getTime()));
         Subscription savedSubscription = subscriptionDao.save(subscription);
         logger.info("saved id ("+savedSubscription.getId()+"), duration is "+savedSubscription.getDuration());
-        return "redirect:/myaccount";
+        return "redirect:/payments?subscriptionId="+savedSubscription.getId(); //"redirect:/myaccount";
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/myaccount")
@@ -58,37 +58,14 @@ public class SubscriptionController {
         for (Subscription s : subscriptions) {
             List<Payment> payments = paymentDao.findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
                     s,new Users(principal.getName()));
-            List<TimeSpan> timeSpans = new ArrayList<TimeSpan>();
-            for(int i=0; i<payments.size(); i++) {
-                Timestamp thisDateConfirm1 = payments.get(i).getDateConfirm1();
-                Timestamp thisDateConfirm1PlusDuration = addDuration(thisDateConfirm1, s.getDuration(), Calendar.HOUR_OF_DAY);
-
-                if (i==0) {
-                    timeSpans.add(new TimeSpan(thisDateConfirm1,thisDateConfirm1PlusDuration));
-                } else {
-                    if (thisDateConfirm1.before(timeSpans.get(i-1).getEnd())) {
-                        Timestamp begin = timeSpans.get(i-1).getEnd();
-                        Timestamp end = addDuration(timeSpans.get(i-1).getEnd(), s.getDuration(), Calendar.HOUR_OF_DAY);
-                        timeSpans.add(new TimeSpan(begin, end));
-                    } else {
-                        timeSpans.add(new TimeSpan(thisDateConfirm1, thisDateConfirm1PlusDuration));
-                    }
-                }
-            }
-            /*logger.warn("timeSpans.size:"+timeSpans.size());
-            for(TimeSpan t:timeSpans) {
-                logger.warn(t.toString());
-            }*/
 
             boolean isActive = false;
             String activeUntil = "";
-            for (int i=timeSpans.size()-1; i>=0 && !isActive; i--) {
+            for (int i=payments.size()-1; i>=0 && !isActive; i--) {
                 Date now = new Date();
-                TimeSpan t = timeSpans.get(i);
-                logger.error(t.toString());
-                if (now.before(t.getEnd())) {
+                if (now.before(payments.get(i).getDateEnd())) {
                     isActive = true;
-                    activeUntil = "active (until " + dateToGMT(t.getEnd())+")";
+                    activeUntil = "active (until " + dateToGMT(payments.get(i).getDateEnd())+")";
                     logger.warn(activeUntil);
                 }
             }

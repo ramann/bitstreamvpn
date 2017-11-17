@@ -44,6 +44,7 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static com.company.dev.util.Util.*;
 import static com.company.dev.util.Util.dateToGMT;
@@ -150,7 +151,7 @@ public class CertificateController {
         if (subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName())) == null) {
             throw new ForbiddenException(errorText(Subscription.class.getName(), String.valueOf(subscriptionId), principal.getName()));
         }
-        List<Certificate> certificates = certificateDao.findBySubscriptionAndSubscription_UsersOrderByDateCreated(
+        List<Certificate> certificates = certificateDao.findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(
                 new Subscription(subscriptionId), new Users(principal.getName()));
 
         for(Certificate c:certificates) {
@@ -188,6 +189,22 @@ public class CertificateController {
         }
         model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("username", principal.getName());
+
+        Certificate stub = certificateDao.findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(new Subscription(subscriptionId));
+
+        String subject = null;
+        if (stub != null) {
+            subject = stub.getSubject();
+        } else {
+            UUID subj = UUID.randomUUID();
+            Certificate newStub = new Certificate("C=US, O=test, CN="+subj.toString(), new Subscription(subscriptionId));
+            Certificate savedStub = certificateDao.save(newStub);
+            subject = savedStub.getSubject();
+            logger.info("saved cert with subject: "+savedStub.getSubject()+", subscriptionId: "+subscriptionId);
+        }
+
+        model.addAttribute("subject", subject);
+
         return "addCert";
     }
 
@@ -205,9 +222,12 @@ public class CertificateController {
         logger.info("das CSR: "+csr);
         FileInputStream is;
         Certificate savedCert = null;
+        Certificate stub = certificateDao.findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(new Subscription(subscriptionId));
+        if (stub == null) { //TODO flesh this out
+            return "redirect:/addCert"; //throw new Exception();
+        }
         try {
             Security.addProvider(new BouncyCastleProvider());
-            logger.debug("found payment!");
             is = new FileInputStream(keystoreLocation);
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(is, "changeit".toCharArray());
@@ -217,10 +237,17 @@ public class CertificateController {
             logger.info("the CSR: "+ Base64.encodeBase64String(pemObjectCsr.getContent()));
 
             BigInteger serial = new BigInteger( 32, new SecureRandom() );
-            Certificate certificate = new Certificate(new Timestamp(new Date().getTime()),
+
+            stub.setDateCreated(new Timestamp(new Date().getTime()));
+            stub.setCsrText(Base64.encodeBase64String(pemObjectCsr.getContent()));
+            stub.setSigned(false);
+            stub.setSerial(serial.longValue());
+            Certificate Certificate = certificateDao.save(stub);
+            /*Certificate certificate = new Certificate(new Timestamp(new Date().getTime()),
                     Base64.encodeBase64String(pemObjectCsr.getContent()), false,
                     subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName())), serial.longValue());
             Certificate Certificate = certificateDao.save(certificate);
+            */
 
             X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
             PrivateKey caKey = (PrivateKey) keyStore.getKey("javaalias", "changeit".toCharArray());
@@ -246,6 +273,7 @@ public class CertificateController {
         //session.setAttribute("certAdded", true);
 
         model.addAttribute("certText",prettyPrintCert(savedCert.getCertText()));
+        model.addAttribute("subscriptionId", subscriptionId);
         return "certAdded";
         //return "redirect:/myaccount"; //?purchaseId="+purchaseId;
     }
@@ -333,7 +361,7 @@ public class CertificateController {
                     "bigpool");
             PeerConfigs savedPeerConfigs = peerConfigsDao.save(peerConfigs);
 
-            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/libexec/ipsec/_updown iptables"); // TODO: this script should be default
+            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/libexec/ipsec/_updown"); // TODO: this script should be default
             ChildConfigs savedChildConfigs = childConfigsDao.save(childConfigs);
 
             PeerConfigChildConfig peerConfigChildConfig = new PeerConfigChildConfig(savedPeerConfigs.getId(), savedChildConfigs.getId());

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity
@@ -21,6 +22,10 @@ public class Payment {
     private Subscription subscription;
     private boolean inError = false;
     private Timestamp dateCreated;
+    private Timestamp dateStart;
+    private Timestamp dateEnd;
+    private BigInteger bandwidth = BigInteger.ZERO;
+
 
     public Payment() {
     }
@@ -34,6 +39,7 @@ public class Payment {
         this.dateConfirm3 = payment.getDateConfirm3();
         this.dateConfirm6 = payment.getDateConfirm6();
         this.subscription = payment.getSubscription();
+        this.bandwidth = payment.getBandwidth();
         this.inError = payment.isInError();
     }
 
@@ -45,7 +51,8 @@ public class Payment {
         this.subscription = subscription;
         this.amountExpecting = amountExpecting;
     }
-/*
+
+    /*
 
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="username")
@@ -153,6 +160,36 @@ public class Payment {
 
     public void setDateCreated(Timestamp dateCreated) {
         this.dateCreated = dateCreated;
+    }
+
+    @Basic
+    @Column(name = "date_start", nullable = true)
+    public Timestamp getDateStart() {
+        return dateStart;
+    }
+
+    public void setDateStart(Timestamp dateStart) {
+        this.dateStart = dateStart;
+    }
+
+    @Basic
+    @Column(name = "date_end", nullable = true)
+    public Timestamp getDateEnd() {
+        return dateEnd;
+    }
+
+    public void setDateEnd(Timestamp dateEnd) {
+        this.dateEnd = dateEnd;
+    }
+
+    @Basic
+    @Column(name = "bandwidth", nullable = false)
+    public BigInteger getBandwidth() {
+        return bandwidth;
+    }
+
+    public void setBandwidth(BigInteger bandwidth) {
+        this.bandwidth = bandwidth;
     }
 
     @ManyToOne(fetch= FetchType.LAZY)

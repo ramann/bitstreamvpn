@@ -5,30 +5,33 @@
 <header th:replace="layout :: header">
 </header>
 
-<div class="container" th:fragment="content">
-    <div th:if="${username == null}">
-        <div>What are you doing here?</div>
-    </div>
-    <div th:unless="${username == null}">
-        <div th:text=" 'Hi,' + ${username} + '. Please add a subscription below.'">Hi, username</div>
 
-    </div>
+<main role="main">
 
-    <form name="f" th:action="@{/addSubscription}" method="post">
-        <div>Add a subscription</div>
-        <fieldset>
-<!--            <label for="title">title:</label>
-            <input type="text" id="title" name="title"/>-->
-            <div>select a duration:</div>
-            <input type="radio" name="duration" value="72"/>3 days<br/>
-            <input type="radio" name="duration" value="168"/>7 days<br/>
-            <input type="radio" name="duration" value="720"/>30 days<br/>
-        </fieldset>
-        <div class="form-actions">
-            <button type="submit" class="btn">Create Subscription</button>
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-5">Add Subscription</h1>
         </div>
-    </form>
-</div>
+    </div>
 
+    <div class="container">
+
+        <form name="f" th:action="@{/addSubscription}" method="post">
+            <fieldset>
+                <!--            <label for="title">title:</label>
+                            <input type="text" id="title" name="title"/>-->
+                <div>select a duration:</div>
+                <input type="radio" name="duration" value="72"/>3 days<br/>
+                <input type="radio" name="duration" value="168"/>7 days<br/>
+                <input type="radio" name="duration" value="720"/>30 days<br/>
+            </fieldset>
+            <div class="form-actions">
+                <button type="submit" class="btn">Create Subscription</button>
+            </div>
+        </form>
+
+    </div>
+</main>
 </body>
 </html>
