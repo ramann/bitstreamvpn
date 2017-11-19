@@ -1,4 +1,3 @@
-#!/bin/sh
 # default updown script
 #
 # Copyright (C) 2003-2004 Nigel Meteringham
@@ -275,13 +274,10 @@ up-client:)
       fi
     fi
 
-    echo "$IPSEC_POLICY_IN" > /tmp/ipsec-policy-in
-    echo "$IPSEC_POLICY_OUT" > /tmp/ipsec-policy-out
-
     NFLOG_GROUP=$(python /usr/local/bin/ipsec/insert.py "$PLUTO_PEER_ID" "$PLUTO_PEER_CLIENT" "$IPSEC_POLICY_IN" "$IPSEC_POLICY_OUT")
     iptables -t mangle -I PREROUTING -s $PLUTO_PEER_CLIENT $IPSEC_POLICY_IN -j NFLOG --nflog-group $NFLOG_GROUP
     iptables -t mangle -I POSTROUTING -d $PLUTO_PEER_CLIENT $IPSEC_POLICY_OUT -j NFLOG --nflog-group $NFLOG_GROUP
-    iptables -t nat -I POSTROUTING -s 10.11.12.13 -o eth0 -j MASQUERADE
+    iptables -t nat -I POSTROUTING -s $PLUTO_PEER_CLIENT -o eth0 -j MASQUERADE
 	;;
 down-client:)
 	# connection to my client subnet going down
@@ -332,26 +328,10 @@ down-client:)
       fi
     fi
 
+    NFLOG_GROUP=$(python /usr/local/bin/ipsec/get_nflog_from_peerid.py "$PLUTO_PEER_ID")
+    echo "$NFLOG_GROUP." >> /tmp/disconnected_nflog_groups
+    iptables -t nat -D POSTROUTING -s $PLUTO_PEER_CLIENT -o eth0 -j MASQUERADE
 
-    echo `date +"%Y-%m-%d %H:%M:%S"` > /tmp/testfile
-    iptables -t mangle -L -vx -n >> /tmp/testfile
-
-    NFLOG_GROUP=$(python /usr/local/bin/ipsec/update_bandwidth.py "$PLUTO_PEER_ID")
-
-#       NFLOG_GROUP=$(python /home/udocker/remove.py "$PLUTO_PEER_ID")
-    echo "$NFLOG_GROUP" > /tmp/nflog_group2
-#       INCOMING_BYTES=$(iptables -t mangle -L -vx -n | grep "nflog-group $NFLOG_GROUP" | awk '{ print $2 }' | head -n1)
-#       echo "$INCOMING_BYTES" > /tmp/incoming
-#       OUTGOING_BYTES=$(iptables -t mangle -L -vx -n | grep "nflog-group $NFLOG_GROUP" | awk '{ print $2 }' | tail -n1 )
-#       echo "$OUTGOING_BYTES" > /tmp/outgoing
-#       TOTAL_BYTES=$(($INCOMING_BYTES+$OUTGOING_BYTES))
-#       echo "$TOTAL_BYTES" > /tmp/total
-
-    iptables -t mangle -D PREROUTING -s $PLUTO_PEER_CLIENT $IPSEC_POLICY_IN -j NFLOG --nflog-group $NFLOG_GROUP
-   iptables -t mangle -D POSTROUTING -d $PLUTO_PEER_CLIENT $IPSEC_POLICY_OUT -j NFLOG --nflog-group $NFLOG_GROUP
-#       echo "$PLUTO_PEER_ID" > /tmp/peer_id
-#       TOTAL_COMPLETE=$(python /home/udocker/update_bandwidth.py "$PLUTO_PEER_ID" $TOTAL_BYTES)
-#       echo "total complete $TOTAL_COMPLETE" > /tmp/total-complete
 	;;
 up-host:iptables)
 	# connection to me, with (left/right)firewall=yes, coming up

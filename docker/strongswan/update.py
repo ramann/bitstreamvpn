@@ -1,40 +1,30 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 from datetime import datetime, date, time
 import MySQLdb as mdb
 import sys
 
 con = mdb.connect('db', 'testipsecuser', 'testing', 'testipsecdb');
-client_id = sys.argv[1]
-nflog = -1
+nflog = sys.argv[1]
+bytes = sys.argv[2]
 band=0
 
 with con:
 
     cur = con.cursor()
-    # get nflog group number
-    cur.execute( "select id from bandwidth where peer_id = '" + client_id + "'" )
+    # get peer_id from group number
+    cur.execute( "select peer_id from bandwidth where id = '" + nflog + "'" )
     rows = cur.fetchall()
-    nflog_group = rows[0]
-    nflog = rows[0][0]
-    cur.execute("delete from bandwidth where peer_id ='" + client_id + "'")
-    lines = [ line for line in open('/tmp/testfile') if 'nflog-group '+str(nflog) in line]
+    peer_id = rows[0]
+    peerid = rows[0][0]
 
-    for line in lines:
-        fields = line.split()
-        if len(fields) >= 2:
-            band += int(fields[1])
-
-    f2=open('/tmp/bandwidth', 'w+')
-    f2.write(str(band))
-    f2.close()
+    # cur.execute("delete from bandwidth where peer_id ='" + peerid + "'")
 
 con = mdb.connect('db', 'test1', 'testing', 'test1');
 
 with con:
 
     cur=con.cursor()
-    cur.execute( "select subscription from certificate where subject = '" + client_id + "'" )
+    cur.execute( "select subscription from certificate where subject = '" + peerid + "'" )
     subscription = str(cur.fetchone()[0])
 
     first_line = ""
@@ -62,13 +52,10 @@ with con:
         f5=open('/tmp/test5', 'w+')
         f5.write( "%s is less than %s" % (now, end))
         f5.close()
-        band = band + row["bandwidth"]
+        band = int(bytes) + row["bandwidth"]
         break
 
     cur.execute("update payment set bandwidth="+str(band)+" where id="+str(payment_id))
 
-#f3=open('/tmp/nflog_group', 'w+')
-#f3.write(""+str(nflog))
-#f3.close
 
 print(int(nflog))

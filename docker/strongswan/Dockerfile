@@ -28,8 +28,11 @@ RUN mkdir -p /usr/src/strongswan \
 
 ADD strongswan.conf /etc/strongswan.conf
 ADD insert.py /usr/local/bin/ipsec/insert.py
-ADD update_bandwidth.py /usr/local/bin/ipsec/update_bandwidth.py
-ADD _updown /usr/local/bin/ipsec/_updown
+ADD update.py /usr/local/bin/ipsec/update.py
+ADD get_nflog_from_peerid.py /usr/local/bin/ipsec/get_nflog_from_peerid.py
+ADD delete_from_bandwidth.py /usr/local/bin/ipsec/delete_from_bandwidth.py
+ADD cron.sh /usr/local/bin/ipsec/cron.sh
+ADD _updown.sh /usr/local/bin/ipsec/_updown.sh
 
 EXPOSE 4500/udp 500/udp
 
