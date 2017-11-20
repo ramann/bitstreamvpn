@@ -1,6 +1,6 @@
 FROM buildpack-deps:xenial
 
-RUN apt-get update && apt-get install -y haveged curl libgmp-dev module-init-tools netcat iptables python-mysqldb && apt-get upgrade -y
+RUN apt-get update && apt-get install -y haveged curl libgmp-dev module-init-tools netcat iptables python-mysqldb cron nano && apt-get upgrade -y
 
 ENV STRONGSWAN_VERSION 5.6.0
 ENV GPG_KEY 948F158A4E76A27BF3D07532DF42C170B34DBA77
@@ -24,7 +24,9 @@ RUN mkdir -p /usr/src/strongswan \
 	&& make -j \
 	&& make install \
     && rm -rf "/usr/src/strongswan*" \
-    && mkdir -p /usr/local/bin/ipsec
+    && mkdir -p /usr/local/bin/ipsec \
+    && echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * bash -x /usr/local/bin/ipsec/cron.sh' | crontab \
+    && update-rc.d cron enable
 
 ADD strongswan.conf /etc/strongswan.conf
 ADD insert.py /usr/local/bin/ipsec/insert.py
@@ -36,4 +38,4 @@ ADD _updown.sh /usr/local/bin/ipsec/_updown.sh
 
 EXPOSE 4500/udp 500/udp
 
-cmd ipsec start --nofork
+CMD service cron restart && ipsec start --nofork

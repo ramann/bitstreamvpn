@@ -6,11 +6,15 @@ services:
       MYSQL_ROOT_PASSWORD: "my-secret-pw"
   webapp:
     image: "ramann/ipsec-vpn:webapp"
-    command: "java -Dkeystore.location=server.keystore -Dspring.datasource.url=jdbc:mysql://db:3306/test1 -Dipsec.datasource.url=jdbc:mysql://db:3306/testipsecdb -jar webapp-0.1.0.jar"
+    command: "java -Xms2048m -Dkeystore.location=server.keystore -Dspring.datasource.url=jdbc:mysql://db:3306/test1 -Dipsec.datasource.url=jdbc:mysql://db:3306/testipsecdb -jar webapp-0.1.0.jar"
+    ports:
+      - 8080:8080
   bitcoin:
     image: "ramann/ipsec-vpn:bitcoin"
     command: "-port=18333 -rpcport=18332 -rpcuser=alice -rpcpassword=alicepass -rpcallowip=172.0.0.0/8 -connect=172.18.0.1:19444 -regtest -server -listen -debug -walletnotify=\"/home/bitcoin/walletnotify.sh %s webapp\" -reindex --blocknotify=\"/home/bitcoin/blocknotify.sh webapp\""
   strongswan:
     image: "ramann/ipsec-vpn:strongswan"
     privileged: true
-
+    ports:
+      - 500:500/udp
+      - 4500:4500/udp

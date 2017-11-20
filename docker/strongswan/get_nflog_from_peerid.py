@@ -14,7 +14,7 @@ client_id = sys.argv[1]
 with con:
 
     cur = con.cursor()
-    cur.execute( "select id from bandwidth where peer_id = '" + client_id + "'" )
+    cur.execute( "select id from bandwidth where peer_id = '" + client_id + "' order by id desc limit 1" )
     rows = cur.fetchall()
 
     #cur.execute("delete from bandwidth where peer_id ='" + client_id + "'")
