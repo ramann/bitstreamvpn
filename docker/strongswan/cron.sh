@@ -2,6 +2,7 @@
 
 echo `date +"%Y-%m-%d %H:%M:%S"` > /tmp/testfile
 iptables -t mangle -L -vx -n -Z >> /tmp/testfile
+rm /tmp/disconnected_nflog_groups_snapshot /tmp/iptables-nflog-groups
 cp /tmp/disconnected_nflog_groups /tmp/disconnected_nflog_groups_snapshot
 cat /tmp/testfile | grep nflog-group > /tmp/iptables-nflog-groups
 

@@ -17,6 +17,24 @@
     <div class="container">
 
         <div th:if="${confirmedPaymentsSize > 0}">
+
+                <div class="row d-none d-xl-flex">
+                    <div class="col-xl-1">ID</div>
+                    <div class="col-xl-2">Bandwidth</div>
+                    <div class="col-xl-4">Receiving Address</div>
+                    <div class="col-xl-2">Amount</div>
+                    <div class="col-xl-3">First Confirmed</div>
+                </div>
+                <div class="row" th:each="payment : ${confirmedPaymentPresentations}">
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">ID:</div><div class="col-xl-1 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.id}"></div>
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Bandwidth:</div><div class="col-xl-2 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.desc}+' GB'"></div>
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Address:</div><div class="col-xl-4 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.receivingAddress}"></div>
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Amount:</div><div class="col-xl-2 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.amount}"></div>
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Confirmed:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.dateConfirm1}"></div>
+                    <hr class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align" style="width: 100%;"/>
+                </div>
+
+            <!--<div style="overflow-x:auto;">
             <table th:classappend="table">
                 <tr>
                     <th>ID</th>
@@ -32,36 +50,49 @@
                     <td th:if="${payment.dateConfirm1 != null}" th:text="${payment.amount}">amount</td>
                     <td th:if="${payment.dateConfirm1 != null}" th:text="${payment.desc}">1st confirmation</td>
                 </tr>
-            </table>
+            </table></div>-->
         </div>
         <hr th:if="${confirmedPaymentsSize > 0}"/>
         <div th:if="${processingPaymentsSize > 0}">
             <h3>Payment(s) being confirmed</h3>
             <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
+            <div class="row d-none d-xl-flex">
+                <div class="col-xl-1">ID</div>
+                <div class="col-xl-4">Receiving Address</div>
+                <div class="col-xl-3">Created</div>
+            </div>
+            <div class="row" th:each="payment : ${processingPaymentPresentations}">
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">ID:</div><div class="col-xl-1 col-lg-6 col-md-9 col-sm-9 col-xs-" th:text="${payment.id}"></div>
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Address:</div><div class="col-xl-4 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.receivingAddress}"></div>
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Created:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.dateCreated}"></div>
+                <hr class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align" style="width: 100%;"/>
+            </div>
+            <!--<div style="overflow-x: auto;">
             <table th:classappend="table">
                 <tr>
                     <th>ID</th>
                     <th>Receiving address</th>
-                    <!--
+                    &lt;!&ndash;
                                     <th>Amount</th>
-                    -->
+                    &ndash;&gt;
                     <th>Creation Date</th>
                 </tr>
                 <tr th:each="payment : ${processingPaymentPresentations}">
                     <td th:text="${payment.id}"></td>
                     <td th:text="${payment.receivingAddress}"></td>
-                    <!--
+                    &lt;!&ndash;
                                     <td th:text="${payment.amount}"></td>
-                    -->
+                    &ndash;&gt;
                     <td th:text="${payment.desc}"></td>
                 </tr>
-            </table>
+            </table></div>-->
             <small>(Once these have been confirmed by the bitcoin network, you'll be able to submit another
                 payment.)
             </small>
         </div>
-        <!-- th:unless="${processingPaymentsSize > 0}" -->
+<!--
         <hr th:if="${processingPaymentsSize > 0}"/>
+-->
         <form th:unless="${processingPaymentsSize > 0}" th:action="@{/addPayment}" method="post">
             You will have 10 minutes to submit a payment, once you click this button.
             <input type="hidden" name="subscriptionId" th:value="${subscriptionId}"/>

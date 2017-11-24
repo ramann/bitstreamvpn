@@ -12,7 +12,6 @@ public class SubscriptionPresentation extends Subscription {
 
     public SubscriptionPresentation(Subscription subscription, boolean isActive, String desc) {
         super(subscription);
-        this.setDuration(this.getDuration()/24);
         this.active = isActive;
         this.desc = desc;
     }

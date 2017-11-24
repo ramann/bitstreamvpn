@@ -10,8 +10,8 @@ import java.sql.Timestamp;
 @Entity
 @Table(name="subscription")
 public class Subscription {
-    private int duration;
-    private BigDecimal price;
+    private SubscriptionPackage subscriptionPackage;
+  //  private BigDecimal price;
     private Users users;
     private int id;
     private Timestamp dateCreated;
@@ -20,8 +20,8 @@ public class Subscription {
 
     public Subscription(Subscription subscription) {
         this.id = subscription.id;
-        this.duration = subscription.duration;
-        this.price = subscription.price;
+        this.subscriptionPackage = subscription.subscriptionPackage;
+    //    this.price = subscription.price;
         this.users = subscription.users;
     }
 
@@ -29,24 +29,30 @@ public class Subscription {
         this.id = id;
     }
 
-    public Subscription(int duration, BigDecimal price, Users users, Timestamp dateCreated) {
-        this.duration = duration;
-        this.price = price;
+    public Subscription(SubscriptionPackage subscriptionPackage, Users users, Timestamp dateCreated) {
+        this.subscriptionPackage = subscriptionPackage;
+    //    this.price = price;
         this.users = users;
         this.dateCreated = dateCreated;
     }
 
-    @Basic
-    @Column(name = "duration", nullable = false)
-    public int getDuration() {
-        return duration;
+    @ManyToOne(fetch= FetchType.LAZY)
+    @JoinColumn(name="subscription_package")
+    public SubscriptionPackage getSubscriptionPackage() {
+        return subscriptionPackage;
     }
 
-    public void setDuration(int duration) {
-        this.duration = duration;
+    /*@Basic
+    @Column(name = "subscription_package", nullable = false)
+    public int getSubscriptionPackage() {
+        return subscriptionPackage;
+    }*/
+
+    public void setSubscriptionPackage(SubscriptionPackage subscriptionPackage) {
+        this.subscriptionPackage = subscriptionPackage;
     }
 
-    @Basic
+    /*@Basic
     @Column(name = "price", nullable = false, precision = 8)
     public BigDecimal getPrice() {
         return price;
@@ -55,7 +61,7 @@ public class Subscription {
     public void setPrice(BigDecimal price) {
         this.price = price;
     }
-
+*/
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="username")
     public Users getUsers() { return users; }
@@ -87,29 +93,5 @@ public class Subscription {
     public void setDateCreated(Timestamp dateCreated) {
         this.dateCreated = dateCreated;
     }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Subscription that = (Subscription) o;
-
-        if (duration != that.duration) return false;
-        if (id != that.id) return false;
-        if (price != null ? !price.equals(that.price) : that.price != null) return false;
-        return users != null ? users.equals(that.users) : that.users == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = duration;
-        result = 31 * result + (price != null ? price.hashCode() : 0);
-        result = 31 * result + (users != null ? users.hashCode() : 0);
-        result = 31 * result + id;
-        return result;
-    }
-
 
 }

@@ -9,32 +9,47 @@
     <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="jumbotron">
         <div class="container">
-            <h1 class="display-5">Login</h1>
+            <h1 class="display-5">Log In</h1>
         </div>
     </div>
 
     <div class="container">
-        <div class="row">
-
-    <form name="f" th:action="@{/login}" method="post">
-        <fieldset>
-            <legend>Please Login</legend>
+        <form class="form-signin" th:action="@{/login}" method="post">
+            <h2 class="form-signin-heading">Please log in</h2>
             <div th:if="${param.error}" class="alert alert-danger">
                 Invalid username or password.
             </div>
             <div th:if="${param.logout}" class="alert alert-success">
                 You have been logged out.
             </div>
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username"/><br/>
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password"/>
-            <div class="form-actions">
-                <button type="submit" class="btn">Log in</button>
-            </div>
-        </fieldset>
-    </form>
-</div>
+            <label for="username" class="sr-only">Username</label>
+            <input id="username" name="username" class="form-control" placeholder="Username" required="" autofocus="" type="text"/>
+            <label for="password" class="sr-only">Password</label>
+            <input id="password" name="password" class="form-control" placeholder="Password" required="" type="password"/>
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Log In</button>
+        </form>
+        <!--    <div class="row">
+
+        <form name="f" th:action="@{/login}" method="post">
+            <fieldset>
+                <legend>Please Login</legend>
+                <div th:if="${param.error}" class="alert alert-danger">
+                    Invalid username or password.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success">
+                    You have been logged out.
+                </div>
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"/><br/>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password"/>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Log in</button>
+                </div>
+            </fieldset>
+        </form>
+</div>-->
     </div>
 </main>
 

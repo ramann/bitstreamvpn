@@ -21,4 +21,10 @@ public class ScheduledTasks {
         log.info("The time is now {}", dateFormat.format(new Date()));
     }
 
+    /* connections should be disallowed if (1) the subscription is inactive, or (2) the bandwidth limit has been exceeded */
+    @Scheduled(fixedRate=600000) // 10 mins
+    public void removeCertificates() {}
+
+    @Scheduled(fixedRate=600000) // 10 mins
+    public void addCertificates() {}
 }

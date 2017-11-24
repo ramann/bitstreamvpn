@@ -16,12 +16,19 @@
     </div>
 
     <div class="container">
-
         <form name="f" th:action="@{/addSubscription}" method="post">
+            <div class="row" th:each="sp : ${subscriptionPackages}">
+                <input type="radio" name="subscriptionPackage" th:value="${sp.id}" th:text="${sp.id}"/><br/>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Create Subscription</button>
+            </div>
+        </form>
+        <!--<form name="f" th:action="@{/addSubscription}" method="post">
             <fieldset>
-                <!--            <label for="title">title:</label>
-                            <input type="text" id="title" name="title"/>-->
-                <div>select a duration:</div>
+                &lt;!&ndash;            <label for="title">title:</label>
+                            <input type="text" id="title" name="title"/>&ndash;&gt;
+                <div>Select a subscription package:</div>
                 <input type="radio" name="duration" value="72"/>3 days<br/>
                 <input type="radio" name="duration" value="168"/>7 days<br/>
                 <input type="radio" name="duration" value="720"/>30 days<br/>
@@ -29,7 +36,7 @@
             <div class="form-actions">
                 <button type="submit" class="btn">Create Subscription</button>
             </div>
-        </form>
+        </form>-->
 
     </div>
 </main>

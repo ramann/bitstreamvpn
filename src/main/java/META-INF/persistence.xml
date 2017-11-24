@@ -6,6 +6,7 @@
         <class>com.company.dev.model.app.domain.Users</class>
         <class>com.company.dev.model.app.domain.Certificate</class>
         <class>com.company.dev.model.app.domain.Subscription</class>
+        <class>com.company.dev.model.app.domain.SubscriptionPackage</class>
         <class>com.company.dev.model.app.domain.Payment</class>
         <properties>
             <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/test1"/>

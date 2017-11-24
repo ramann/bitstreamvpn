@@ -123,6 +123,8 @@ public class CertificateController {
         model.addAttribute("username", principal.getName());
         model.addAttribute("certInfo", printBasicCertInfo(cert));
         model.addAttribute("certificate", certificate);
+        model.addAttribute("subscriptionId", certificate.getSubscription().getId());
+
         session.removeAttribute("invalidPassword");
         return "deleteCert";
     }
@@ -165,9 +167,7 @@ public class CertificateController {
                 PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(c.getCertText())));
                 PemObject pemObjectCert = pemReaderCert.readPemObject();
                 X509CertificateHolder cert = new X509CertificateHolder(pemObjectCert.getContent());
-                c.setCertText("serial: "+cert.getSerialNumber()+"\n"+
-                        "subject: "+ cert.getSubject().toString()+"\n"+
-                        "expires on "+dateToGMT(cert.getNotAfter())); // TODO display time in GMT
+                c.setCertText(dateToGMT(cert.getNotAfter())); // TODO display time in GMT
                 logger.debug("c:"+c.getCertText());
             } catch (Exception e) {
                 logger.error("Error reading pem of CSR or cert");
@@ -190,6 +190,13 @@ public class CertificateController {
         model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("username", principal.getName());
 
+        List<Certificate> issuedCertificates = certificateDao
+                .findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(
+                    new Subscription(subscriptionId),
+                    new Users(principal.getName()));
+
+
+
         Certificate stub = certificateDao.findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(new Subscription(subscriptionId));
 
         String subject = null;
@@ -203,7 +210,10 @@ public class CertificateController {
             logger.info("saved cert with subject: "+savedStub.getSubject()+", subscriptionId: "+subscriptionId);
         }
 
-        model.addAttribute("subject", subject);
+        String command = "sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048\n" +
+            "sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '"+
+            subject.replace(", ","/").replace("C=", "/C=")+"'";
+        model.addAttribute("command", command);
 
         return "addCert";
     }
@@ -361,7 +371,7 @@ public class CertificateController {
                     "bigpool");
             PeerConfigs savedPeerConfigs = peerConfigsDao.save(peerConfigs);
 
-            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/libexec/ipsec/_updown"); // TODO: this script should be default
+            ChildConfigs childConfigs = new ChildConfigs("rw", "/usr/local/bin/ipsec/_updown.sh"); // TODO: this script should be default
             ChildConfigs savedChildConfigs = childConfigsDao.save(childConfigs);
 
             PeerConfigChildConfig peerConfigChildConfig = new PeerConfigChildConfig(savedPeerConfigs.getId(), savedChildConfigs.getId());

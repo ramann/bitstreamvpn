@@ -35,6 +35,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.security.Principal;
 import java.sql.Timestamp;
 import java.util.*;
@@ -91,8 +93,8 @@ public class PaymentController {
             }
 
             String result = restTemplate.getForObject("https://blockchain.info/tobtc?currency={currency}&value={value}",
-                    String.class,"USD",subscription.getPrice().toString());
-            logger.debug("bitcoin price for "+subscription.getPrice().toString()+", is: "+result);
+                    String.class,"USD",Double.toString(subscription.getSubscriptionPackage().getPrice()));
+            logger.debug("bitcoin price for "+subscription.getSubscriptionPackage().getPrice()+", is: "+result);
             BigDecimal amountExpecting = new BigDecimal(result);
 
             JSONObject getNewAddress = new JSONObject(newAddress);
@@ -149,12 +151,13 @@ public class PaymentController {
                 users);
         List<PaymentPresentation> processingPaymentPresentations = new ArrayList<PaymentPresentation>();
         for (Payment p: processingPayments) {
-            processingPaymentPresentations.add(new PaymentPresentation(p,dateToGMT(p.getDateCreated())));
+            processingPaymentPresentations.add(new PaymentPresentation(p));
         }
 
         List<PaymentPresentation> confirmedPaymentPresentations = new ArrayList<PaymentPresentation>();
         for(Payment p:confirmedPayments) {
-            confirmedPaymentPresentations.add(new PaymentPresentation(p,dateToGMT(p.getDateCreated())));
+            BigDecimal gigabytes = new BigDecimal(p.getBandwidth()).divide(new BigDecimal("1000").pow(3)).setScale(2, RoundingMode.HALF_UP);
+            confirmedPaymentPresentations.add(new PaymentPresentation(p, gigabytes.toPlainString()));
         }
         logger.info("principal.getName:"+principal.getName()+
                 ", confirmedPayments: "+confirmedPayments.size());

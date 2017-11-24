@@ -52,10 +52,10 @@ public class Util {
     private static final Logger logger = LoggerFactory.getLogger(Util.class);
     public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     public static final String END_CERT = "-----END CERTIFICATE-----";
-    public static int[] durations = {72, 168, 720};
+//    public static int[] durations = {72, 168, 720};
 
     // let's say 0.02 USD/hour
-    public static final double pricePerUnit = 0.02;
+//    public static final double pricePerUnit = 0.02;
 
     public static String performNSLookup(String name) {
         InetAddress inetHost = null;
@@ -65,7 +65,7 @@ public class Util {
             String hostName = inetHost.getHostName();
             logger.info("The host name was: " + hostName);
             logger.info("The hosts IP address is: " + inetHost.getHostAddress());
-            ret = inetHost.getHostName();
+            ret = inetHost.getHostAddress();
         } catch(UnknownHostException ex) {
             logger.error("Unrecognized host",ex);
             ret = "104.236.219.189"; //"172.18.0.5"; //TODO: fix this logic

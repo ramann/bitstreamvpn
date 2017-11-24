@@ -37,7 +37,7 @@ public class RestfulController {
         for(int i=0; i<payments.size(); i++) {
             if (payments.get(i).getDateStart() == null || payments.get(i).getDateEnd() == null) {
                 Timestamp thisDateConfirm1 = payments.get(i).getDateConfirm1();
-                Timestamp thisDateConfirm1PlusDuration = addDuration(thisDateConfirm1, subscription.getDuration(), Calendar.HOUR_OF_DAY);
+                Timestamp thisDateConfirm1PlusDuration = addDuration(thisDateConfirm1, subscription.getSubscriptionPackage().getDuration(), Calendar.DAY_OF_MONTH);
 
                 if (i == 0) { // if this is the first payment
                     if (payments.get(i).getDateStart() == null)
@@ -48,7 +48,7 @@ public class RestfulController {
                 } else {
                     if (thisDateConfirm1.before(payments.get(i - 1).getDateEnd())) {
                         Timestamp begin = payments.get(i - 1).getDateEnd();
-                        Timestamp end = addDuration(payments.get(i - 1).getDateEnd(), subscription.getDuration(), Calendar.HOUR_OF_DAY);
+                        Timestamp end = addDuration(payments.get(i - 1).getDateEnd(), subscription.getSubscriptionPackage().getDuration(), Calendar.DAY_OF_MONTH);
 
                         if (payments.get(i).getDateStart() == null)
                             payments.get(i).setDateStart(begin);

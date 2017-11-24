@@ -17,6 +17,7 @@ use test1;
 drop table if exists payment;
 drop table if exists certificate;
 drop table if exists subscription;
+drop table if exists subscription_package;
 drop table if exists users;
 
 CREATE TABLE users (
@@ -31,17 +32,38 @@ INSERT INTO `users` VALUES ('apiuser',0x0083E0069FAE0845B3A45AC8ABED8C8C68F05033
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
+CREATE TABLE subscription_package (
+  id integer unsigned NOT NULL auto_increment,
+  name varchar(30),
+  duration integer unsigned NOT NULL,
+  certs integer unsigned NOT NULL,
+  bytes BIGINT unsigned NOT NULL,
+  price numeric(5,2) NOT NULL,
+  primary key (id),
+  unique (name)
+);
+
+LOCK TABLES `subscription_package` WRITE;
+ALTER TABLE `subscription_package` DISABLE KEYS;
+INSERT INTO `subscription_package` (name, duration, certs, bytes, price) VALUES ("Beginner's Test", 3, 1, 600000000, 1.0); -- 3 days, 6 GB, $1, 1 device ; 2.0 GB/device/day; (1/3)/1/6=0.05555
+INSERT INTO `subscription_package` (name, duration, certs, bytes, price) VALUES ("Package 2", 7, 2, 5000000000, 5.0); -- 7 days, 50 GB, $5, 2 devices ; 2.14 GB/device/day; (5/7)/2/50=0.00714
+INSERT INTO `subscription_package` (name, duration, certs, bytes, price) VALUES ("Package 3", 30, 5, 300000000000, 10.0); -- 30 days, 300 GB, $12, 4 devices ; 2.5 GB/device/day; (12/30)/4/300=0.00033
+ALTER TABLE `subscription_package` ENABLE KEYS;
+UNLOCK TABLES;
+
+
 --
 -- Name: subscription; Type: TABLE; Schema: public; Owner: test1
 --
 CREATE TABLE subscription (
-    duration integer NOT NULL,
-    price numeric(11,8) NOT NULL,
+    subscription_package integer unsigned not null, -- duration integer NOT NULL,
+ --   price numeric(11,8) NOT NULL,
     username varchar(30) NOT NULL,
     id integer unsigned NOT NULL auto_increment,
     date_created timestamp NOT NULL,
     primary key (id),
-    FOREIGN KEY (username) REFERENCES users(username)
+    FOREIGN KEY (username) REFERENCES users(username),
+    FOREIGN KEY (subscription_package) REFERENCES subscription_package(id)
 );
 
 

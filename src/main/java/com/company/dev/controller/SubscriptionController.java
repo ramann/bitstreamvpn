@@ -3,9 +3,11 @@ package com.company.dev.controller;
 import com.company.dev.model.app.SubscriptionPresentation;
 import com.company.dev.model.app.domain.Payment;
 import com.company.dev.model.app.domain.Subscription;
+import com.company.dev.model.app.domain.SubscriptionPackage;
 import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
+import com.company.dev.model.app.repo.SubscriptionPackageDao;
 import com.company.dev.util.TimeSpan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,20 +33,24 @@ public class SubscriptionController {
     @RequestMapping(method= RequestMethod.GET, value="/addSubscription")
     public String addSubscription(Model model, Principal principal) {
         logger.info("entered /addSubscription");
+        List<SubscriptionPackage> subscriptionPackages = subscriptionPackageDao.findAll();
+        model.addAttribute("subscriptionPackages", subscriptionPackages);
         model.addAttribute("username", principal.getName());
         return "addSubscription";
     }
 
     @RequestMapping(method=RequestMethod.POST, value="/addSubscription")
-    public String postAddSubscription(Model model, Principal principal, int duration, HttpServletResponse response) {
-        if(Arrays.binarySearch(durations,duration) < 0) {
-            logger.error("duration: "+duration+" is not valid");
+    public String postAddSubscription(Model model, Principal principal, int subscriptionPackage, HttpServletResponse response) {
+        SubscriptionPackage subPackage = subscriptionPackageDao.findById(subscriptionPackage);
+
+        if(subPackage == null) {
+            logger.error("subscriptionPackage: "+subscriptionPackage+" is not valid");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        Subscription subscription = new Subscription(duration, new BigDecimal(duration*pricePerUnit),
+        Subscription subscription = new Subscription(subPackage,
                 new Users(principal.getName()), new Timestamp(new Date().getTime()));
         Subscription savedSubscription = subscriptionDao.save(subscription);
-        logger.info("saved id ("+savedSubscription.getId()+"), duration is "+savedSubscription.getDuration());
+        logger.info("saved id ("+savedSubscription.getId()+"), subscriptionPackage is "+savedSubscription.getSubscriptionPackage());
         return "redirect:/payments?subscriptionId="+savedSubscription.getId(); //"redirect:/myaccount";
     }
 
@@ -101,4 +107,7 @@ public class SubscriptionController {
 
     @Autowired
     PaymentDao paymentDao;
+
+    @Autowired
+    SubscriptionPackageDao subscriptionPackageDao;
 }
