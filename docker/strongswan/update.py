@@ -12,7 +12,7 @@ with con:
 
     cur = con.cursor()
     # get peer_id from group number
-    cur.execute( "select peer_id from bandwidth where id = '" + nflog + "'" )
+    cur.execute( "select peer_id from connections where id = '" + nflog + "'" )
     rows = cur.fetchall()
     peer_id = rows[0]
     peerid = rows[0][0]

@@ -38,4 +38,6 @@ public interface PaymentDao extends CrudRepository<Payment, Long> {
 
     public Payment findByReceivingAddress(String address);
 
+    public List<Payment> findBySubscription(Subscription subscription);
+
 } // class UserDao

@@ -9,6 +9,7 @@ import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
 import com.company.dev.model.app.repo.SubscriptionPackageDao;
 import com.company.dev.util.TimeSpan;
+import com.company.dev.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.security.Principal;
 import java.sql.Timestamp;
 import java.util.*;
@@ -34,6 +36,9 @@ public class SubscriptionController {
     public String addSubscription(Model model, Principal principal) {
         logger.info("entered /addSubscription");
         List<SubscriptionPackage> subscriptionPackages = subscriptionPackageDao.findAll();
+        for (SubscriptionPackage sp: subscriptionPackages) {
+            sp.setBytes(sp.getBytes().divide(new BigInteger("1000").pow(3)));
+        }
         model.addAttribute("subscriptionPackages", subscriptionPackages);
         model.addAttribute("username", principal.getName());
         return "addSubscription";

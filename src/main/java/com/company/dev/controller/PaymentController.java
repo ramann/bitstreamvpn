@@ -7,6 +7,7 @@ import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
 import com.company.dev.util.ForbiddenException;
+import com.company.dev.util.Util;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
@@ -156,7 +157,7 @@ public class PaymentController {
 
         List<PaymentPresentation> confirmedPaymentPresentations = new ArrayList<PaymentPresentation>();
         for(Payment p:confirmedPayments) {
-            BigDecimal gigabytes = new BigDecimal(p.getBandwidth()).divide(new BigDecimal("1000").pow(3)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal gigabytes = Util.bytesToGigabytes(p.getBandwidth()); //new BigDecimal(p.getBandwidth()).divide(new BigDecimal("1000").pow(3)).setScale(2, RoundingMode.HALF_UP);
             confirmedPaymentPresentations.add(new PaymentPresentation(p, gigabytes.toPlainString()));
         }
         logger.info("principal.getName:"+principal.getName()+

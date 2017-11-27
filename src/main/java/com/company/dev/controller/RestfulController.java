@@ -2,8 +2,10 @@ package com.company.dev.controller;
 
 import com.company.dev.model.app.domain.Payment;
 import com.company.dev.model.app.domain.Subscription;
+import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
+import com.company.dev.util.CertHelper;
 import com.company.dev.util.TimeSpan;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,7 +33,10 @@ public class RestfulController {
     @Autowired
     private PaymentDao paymentDao;
 
-    public void setStartAndEndDates(Subscription subscription) {
+    @Autowired
+    private CertHelper certHelper;
+
+    private void setStartAndEndDates(Subscription subscription) {
         List<Payment> payments = paymentDao.findBySubscriptionAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(subscription);
 
         for(int i=0; i<payments.size(); i++) {
@@ -118,6 +123,7 @@ public class RestfulController {
 
                 if (confirmations >= 1 && payment.getDateConfirm1()==null) {
                     payment.setDateConfirm1(new Timestamp(new Date().getTime()));
+                    certHelper.insertCertsIpsec(payment.getSubscription());
                     setStartAndEndDates(payment.getSubscription());
                     logger.info("updateConfirmations setDateConfirm1: "+payment.getDateConfirm1());
                 }
@@ -177,6 +183,7 @@ public class RestfulController {
         }
         if (confirmations >= 1 && payment.getDateConfirm1()==null) {
             payment.setDateConfirm1(new Timestamp(new Date().getTime()));
+            certHelper.insertCertsIpsec(payment.getSubscription());
             setStartAndEndDates(payment.getSubscription());
             logger.info("setDateConfirm1: "+payment.getDateConfirm1());
         }

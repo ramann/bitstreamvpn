@@ -20,7 +20,7 @@
 
 
     <form name="f" th:action="@{/addCert}" method="post">
-        <div>Paste in your CSR.</div>
+        <div>Run the following commands in your terminal. Then, paste the output (including the BEGIN and END lines) in the below text box.</div>
         <pre th:text="${command}">
             sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
             sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=peer1'

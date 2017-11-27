@@ -14,6 +14,6 @@ ipsec_policy_out = sys.argv[4]
 with con:
 
     cur = con.cursor()
-    cur.execute("INSERT INTO bandwidth(peer_id, virtual_ip, ipsec_policy_in, ipsec_policy_out) VALUES( %s , %s , %s , %s )", (client_id, client_ip, ipsec_policy_in, ipsec_policy_out))
+    cur.execute("INSERT INTO connections(peer_id, virtual_ip, ipsec_policy_in, ipsec_policy_out) VALUES( %s , %s , %s , %s )", (client_id, client_ip, ipsec_policy_in, ipsec_policy_out))
     print con.insert_id()
 

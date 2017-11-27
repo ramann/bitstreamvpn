@@ -17,24 +17,37 @@
     </div>
 
     <div class="container">
-        <div class="row">
 
-    <div class="alert alert-danger" th:if="${invalidPassword} != null">You entered an <strong>invalid password</strong> when trying to delete.</div>
+        <div class="alert alert-danger" th:if="${invalidPassword} != null">You entered an <strong>invalid password</strong> when trying to delete.</div>
+        <div class="alert alert-danger" th:if="${certInUse} != null">You must stop all connections using this certificate before you can delete it.</div>
 
+
+
+<!--
             <pre th:text="${certInfo}">certificate text</pre>
+-->
+            <div class="row d-none d-lg-flex">
+                <div class="col-lg-2">Serial</div>
+                <div class="col-lg-6">Subject</div>
+            </div>
+            <div class="row">
+                <div class="d-lg-none col-md-3 col-sm-3 col-xs-3 right-align">Serial:</div><div class="col-lg-2 col-md-9 col-sm-9 col-xs-9" th:text="${certificate.serial}"></div>
+                <div class="d-lg-none col-md-3 col-sm-3 col-xs-3 right-align">Subject:</div><div class="col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${certificate.subject}"></div>
+            </div>
 
-    <form name="f" th:action="@{/deleteCert}" method="post">
-        <fieldset>
-            <label for="password">Please confirm your password</label>
-            <input type="password" id="password" name="password"/><br/>
-            <input type="hidden" name="serial" th:value="${certificate.serial}"/>
-        </fieldset>
 
-        <div class="form-actions">
-            <button type="submit" class="btn">Delete</button>
-        </div>
-    </form>
-</div>
+        <form name="f" th:action="@{/deleteCert}" method="post">
+            <fieldset>
+                <label for="password" class="sr-only">Password</label>
+                <input id="password" name="password" placeholder="Password" required="" type="password"/>
+                <input type="hidden" name="serial" th:value="${certificate.serial}"/>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Delete</button>
+            </div>
+        </form>
+
     </div>
 </main>
 

@@ -37,7 +37,9 @@ import org.thymeleaf.util.StringUtils;
 import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
@@ -71,6 +73,11 @@ public class Util {
             ret = "104.236.219.189"; //"172.18.0.5"; //TODO: fix this logic
         }
         return ret;
+    }
+
+    public static BigDecimal bytesToGigabytes(BigInteger bytes) {
+        BigDecimal gigabytes = new BigDecimal(bytes).divide(new BigDecimal("1000").pow(3)).setScale(2, RoundingMode.HALF_UP);
+        return gigabytes;
     }
 
     public static String errorText(String objectName, String objectValue) {

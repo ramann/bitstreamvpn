@@ -20,16 +20,16 @@
 
                 <div class="row d-none d-xl-flex">
                     <div class="col-xl-1">ID</div>
-                    <div class="col-xl-2">Bandwidth</div>
+                    <div class="col-xl-2">Bytes Used</div>
                     <div class="col-xl-4">Receiving Address</div>
-                    <div class="col-xl-2">Amount</div>
+                    <div class="col-xl-2">Amount (BTC)</div>
                     <div class="col-xl-3">First Confirmed</div>
                 </div>
                 <div class="row" th:each="payment : ${confirmedPaymentPresentations}">
                     <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">ID:</div><div class="col-xl-1 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.id}"></div>
                     <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Bandwidth:</div><div class="col-xl-2 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.desc}+' GB'"></div>
                     <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Address:</div><div class="col-xl-4 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.receivingAddress}"></div>
-                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Amount:</div><div class="col-xl-2 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.amount}"></div>
+                    <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Amount (BTC):</div><div class="col-xl-2 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.amount}"></div>
                     <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Confirmed:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.dateConfirm1}"></div>
                     <hr class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align" style="width: 100%;"/>
                 </div>
@@ -55,16 +55,15 @@
         <hr th:if="${confirmedPaymentsSize > 0}"/>
         <div th:if="${processingPaymentsSize > 0}">
             <h3>Payment(s) being confirmed</h3>
-            <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
             <div class="row d-none d-xl-flex">
-                <div class="col-xl-1">ID</div>
-                <div class="col-xl-4">Receiving Address</div>
-                <div class="col-xl-3">Created</div>
+                <div class="col-xl-3">ID</div>
+                <div class="col-xl-6">Receiving Address</div>
+                <div class="col-xl-3">First Seen</div>
             </div>
             <div class="row" th:each="payment : ${processingPaymentPresentations}">
-                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">ID:</div><div class="col-xl-1 col-lg-6 col-md-9 col-sm-9 col-xs-" th:text="${payment.id}"></div>
-                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Address:</div><div class="col-xl-4 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.receivingAddress}"></div>
-                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Created:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.dateCreated}"></div>
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">ID:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-" th:text="${payment.id}"></div>
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">Address:</div><div class="col-xl-6 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.receivingAddress}"></div>
+                <div class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align">First Seen:</div><div class="col-xl-3 col-lg-6 col-md-9 col-sm-9 col-xs-9" th:text="${payment.dateInitiated}"></div>
                 <hr class="d-xl-none col-lg-6 col-md-3 col-sm-3 col-xs-3 right-align" style="width: 100%;"/>
             </div>
             <!--<div style="overflow-x: auto;">

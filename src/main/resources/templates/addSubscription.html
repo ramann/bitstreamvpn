@@ -17,9 +17,25 @@
 
     <div class="container">
         <form name="f" th:action="@{/addSubscription}" method="post">
-            <div class="row" th:each="sp : ${subscriptionPackages}">
-                <input type="radio" name="subscriptionPackage" th:value="${sp.id}" th:text="${sp.id}"/><br/>
+            <div class="row d-none d-lg-flex">
+                <div class="col-lg-1"></div>
+                <div class="col-lg-3">Name</div>
+                <div class="col-lg-2">Price</div>
+                <div class="col-lg-2">Days</div>
+                <div class="col-lg-2">Certs</div>
+                <div class="col-lg-2">Total Bytes</div>
             </div>
+            <!--<div class="row" th:each="sp : ${subscriptionPackages}">-->
+                <label class="row" style="margin-bottom: inherit;" th:each="sp : ${subscriptionPackages}">
+                    <div class="col-lg-1 col-md-6 col-sm-6 right-align"><input type="radio" name="subscriptionPackage" th:value="${sp.id}"/></div>
+                    <div class="col-lg-3 col-md-6 col-sm-6" th:text="${sp.name}"></div>
+                    <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Price</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="'$'+${sp.price}"></div>
+                    <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Days</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${sp.duration}"></div>
+                    <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Certs</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${sp.certs}"></div>
+                    <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Total Bytes</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${sp.bytes}+' GB'"></div>
+                    <hr class="d-lg-none col-md-6"/>
+                </label>
+            <!--</div>-->
             <div class="form-actions">
                 <button type="submit" class="btn">Create Subscription</button>
             </div>

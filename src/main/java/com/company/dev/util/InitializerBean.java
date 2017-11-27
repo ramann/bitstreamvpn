@@ -74,7 +74,7 @@ public class InitializerBean implements CommandLineRunner {
 
             /* Insert CA cert */
             Certificates caCertificates = new Certificates((byte) 1, (byte) 1, caCert.getEncoded());
-            Certificates savedCaCertificates = certificatesDao.save(caCertificates);
+            Certificates savedCaCertificates = (certificatesDao.findByData(caCert.getEncoded()) == null) ? certificatesDao.save(caCertificates) : null ;
             logger.debug("savedCaCertificate:"+savedCaCertificates);
 
             /* Insert CA Certificate Authority */
