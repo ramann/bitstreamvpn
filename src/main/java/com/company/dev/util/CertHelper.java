@@ -10,6 +10,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.slf4j.Logger;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Component;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
@@ -36,15 +39,19 @@ public class CertHelper {
     public String keystoreLocation;
 
     public X509Certificate certificateTox509Certificate(Certificate certificate) {
+        Security.addProvider(new BouncyCastleProvider());
         X509Certificate x509Certificate = null;
         try {
             PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(certificate.getCertText())));
             PemObject pemObjectCert = pemReaderCert.readPemObject();
             X509CertificateHolder x509CertificateHolder = new X509CertificateHolder(pemObjectCert.getContent());
             x509Certificate = new JcaX509CertificateConverter().setProvider("BC").getCertificate(x509CertificateHolder);
-        } catch (Exception e) {
-            logger.error("Error occurred getting X509Certificate from Certificate");
+        } catch (IOException e) {
+            logger.error("Error occurred getting X509Certificate from Certificate", e);
+        } catch (CertificateException c) {
+            logger.error("certificate exception", c);
         }
+
         return x509Certificate;
     }
 

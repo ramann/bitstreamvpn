@@ -36,7 +36,7 @@ public class Subscription {
         this.dateCreated = dateCreated;
     }
 
-    @ManyToOne(fetch= FetchType.LAZY)
+    @ManyToOne(fetch= FetchType.EAGER)
     @JoinColumn(name="subscription_package")
     public SubscriptionPackage getSubscriptionPackage() {
         return subscriptionPackage;

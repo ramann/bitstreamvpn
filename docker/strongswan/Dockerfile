@@ -19,20 +19,19 @@ RUN mkdir -p /usr/src/strongswan \
 	    --enable-gcm \
 	    --enable-sql \
 	    --enable-mysql \
-	    --enable-sqlite \
 	    --enable-attr-sql \
 	&& make -j \
 	&& make install \
-    && rm -rf "/usr/src/strongswan*" \
     && mkdir -p /usr/local/bin/ipsec \
-    && echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/5 * * * * bash -x /usr/local/bin/ipsec/cron.sh' | crontab \
+    && echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n*/2 * * * * bash -x /usr/local/bin/ipsec/cron.sh' | crontab \
     && update-rc.d cron enable
 
 ADD strongswan.conf /etc/strongswan.conf
 ADD insert.py /usr/local/bin/ipsec/insert.py
 ADD update.py /usr/local/bin/ipsec/update.py
 ADD get_nflog_from_peerid.py /usr/local/bin/ipsec/get_nflog_from_peerid.py
-ADD delete_from_bandwidth.py /usr/local/bin/ipsec/delete_from_bandwidth.py
+ADD delete_from_connections.py /usr/local/bin/ipsec/delete_from_connections.py
+ADD identity_exists.py /usr/local/bin/ipsec/identity_exists.py
 ADD cron.sh /usr/local/bin/ipsec/cron.sh
 ADD _updown.sh /usr/local/bin/ipsec/_updown.sh
 

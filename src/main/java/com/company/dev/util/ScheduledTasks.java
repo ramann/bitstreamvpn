@@ -3,9 +3,11 @@ package com.company.dev.util;
 import com.company.dev.model.app.SubscriptionPresentation;
 import com.company.dev.model.app.domain.Payment;
 import com.company.dev.model.app.domain.Subscription;
+import com.company.dev.model.app.domain.SubscriptionPackage;
 import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.PaymentDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,7 @@ public class ScheduledTasks {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 60000)
     public void reportCurrentTime() {
         logger.info("The time is now {}", dateFormat.format(new Date()));
     }
@@ -46,17 +48,24 @@ public class ScheduledTasks {
                 if (now.before(payments.get(i).getDateEnd())) {
                     isActive = true;
                     logger.info("found active payment: "+payments.get(i).getId());
+
+                    SubscriptionPackage sp = s.getSubscriptionPackage();
+
                     // if the payment is active
                     // and the bandwidth used is >= the subscription package's bandwidth
-                    if (payments.get(i).getBandwidth().compareTo(payments.get(i).getSubscription().getSubscriptionPackage().getBytes()) >= 0) {
+                    if (payments.get(i).getBandwidth().compareTo(sp.getBytes()) >= 0) {
                         logger.info("payment's bandwidth "+payments.get(i).getBandwidth()+" is too high");
-                        certHelper.removeCertsIpsec(payments.get(i).getSubscription());
+                        certHelper.removeCertsIpsec(s);
                     } else {
                         logger.info("payment's bandwidth "+payments.get(i).getBandwidth()+" is NOT too high");
                     }
                 }
             }
 
+            if ( !isActive ) {
+                logger.info("subscription is not active");
+                certHelper.removeCertsIpsec(s);
+            }
         }
     }
 
