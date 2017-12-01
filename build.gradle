@@ -62,7 +62,7 @@ dependencies {
 group='ramann'
 
 task buildDocker(type: Docker, dependsOn: build) {
-    applicationName = 'ipsec-vpn'
+    applicationName = 'bitstreamvpn'
     tagVersion = 'webapp'
     dockerfile = file('Dockerfile')
     doFirst {

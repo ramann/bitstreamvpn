@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
+
+<body>
+<!--/* Standard layout can be mixed with Layout Dialect */-->
+<div th:replace="header :: header" th:fragment="header">
+</div>
+<main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-4">Instructions</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="padding-bottom">
+            <h3>How do I install a client?</h3>
+            <div>sudo apt-get install strongswan</div>
+        </div>
+        <div class="padding-bottom">
+            <h3>How long do I have to wait for my payment to be confirmed?</h3>
+            <div>Your subscription will be active after your payment has one confirmation on the Bitcoin network. Typically, this takes about 10 minutes, but may take longer.</div>
+        </div>
+        <div class="padding-bottom">
+            <h3>How do I create a certificate signing request?</h3>
+            <div>We'll give you some commands like <pre>sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
+                sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=d2a2419d-e6d0-46f7-9f58-23c2c2f210d8'</pre>. Run these in your terminal and give us the output to receive your certificate.</div>
+        </div>
+        <div class="padding-bottom">
+            <h3>What about your certificate? I need that.</h3>
+            <div>Download our <a href="#">CA certificate</a> and put it in /etc/ipsec.d/cacerts/bitstreamvpn-ca.pem</div>
+            <div>Also, download our <a href="#">endpoint certificate</a> and put it in /etc/ipsec.d/certs/bitstreamvpn-endpoint.pem</div>
+        </div>
+        <div class="padding-bottom">
+            <h3>What do I use for my configuration file?</h3>
+            <div>Create /etc/ipsec.conf with the below contents:<pre>config setup
+        charondebug="ike 2, cfg 2"
+
+            conn bitstreamvpn
+        rightsubnet=0.0.0.0/0
+        keyexchange=ikev2
+        auto=add
+        right=
+        leftsourceip=%modecfg
+        rightcert=bitstreamvpn-endpoint.pem
+        leftcert=vpn_client.pem</pre></div>
+        </div>
+        <div class="padding-bottom">
+            <h3>What about a kill switch? Everyone else has that.</h3>
+            <div>We don't peddle in marketing terms for firewall rules. Use iptables.</div>
+        </div>
+    </div>
+
+</main>
+<!--/* Footer fragment */-->
+<footer th:replace="footer :: footer" class="text-center">&copy; 2017 Default Footer</footer>
+</body>
+</html>

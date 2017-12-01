@@ -1,6 +1,8 @@
 package com.company.dev.controller;
 
+import com.company.dev.model.app.domain.SubscriptionPackage;
 import com.company.dev.model.app.domain.Users;
+import com.company.dev.model.app.repo.SubscriptionPackageDao;
 import com.company.dev.model.app.repo.UsersDao;
 import com.company.dev.util.Util;
 import com.github.cage.Cage;
@@ -25,8 +27,10 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static java.lang.System.out;
@@ -141,6 +145,18 @@ public class UsersController {
         return "greeting";
     }
 
+    @RequestMapping(method=RequestMethod.GET, value = "/howitworks")
+    public String howItWorks(Model model) {
+        logger.info("GET /howitworks");
+        return "howitworks";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/about")
+    public String about(Model model) {
+        logger.info("GET /about");
+        return "about";
+    }
+
     @RequestMapping(method=RequestMethod.GET, value = "/login")
     public String login(Model model) {
         logger.info("GET /login");
@@ -151,6 +167,12 @@ public class UsersController {
     public String signIn(Model model) {
         logger.info("GET /signin");
         return "signin";
+    }
+
+    @RequestMapping(method=RequestMethod.GET, value = "/faq")
+    public String faq(Model model) {
+        logger.info("GET /faq");
+        return "faq";
     }
 
     @RequestMapping(method=RequestMethod.POST, value = "/login")

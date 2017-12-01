@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
+
+<body>
+<!--/* Standard layout can be mixed with Layout Dialect */-->
+<div th:replace="header :: header" th:fragment="header">
+</div>
+<main role="main">
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-4">About</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="padding-bottom">
+            <h3>What is this?</h3>
+            <div>It's <a href="github.com/ramann/bitstreamvpn"> a project on Github</a>. Please go there to read more about it, and to create an issue or a pull request.</div>
+        </div>
+    </div>
+
+</main>
+<!--/* Footer fragment */-->
+<footer th:replace="footer :: footer" class="text-center">&copy; 2017 Default Footer</footer>
+</body>
+</html>

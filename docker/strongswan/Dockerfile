@@ -34,7 +34,8 @@ ADD delete_from_connections.py /usr/local/bin/ipsec/delete_from_connections.py
 ADD identity_exists.py /usr/local/bin/ipsec/identity_exists.py
 ADD cron.sh /usr/local/bin/ipsec/cron.sh
 ADD _updown.sh /usr/local/bin/ipsec/_updown.sh
+ADD wait_for_db.py /usr/local/bin/ipsec/wait_for_db.py
 
 EXPOSE 4500/udp 500/udp
 
-CMD service cron restart && ipsec start --nofork
+CMD service cron restart && python /usr/local/bin/ipsec/wait_for_db.py && ipsec start --nofork
