@@ -34,6 +34,7 @@ import javax.servlet.http.HttpSession;
 import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -64,6 +65,29 @@ public class CertificateController {
     @Autowired
     CertHelper certHelper;
 
+    @RequestMapping(method=RequestMethod.GET, value="/cacert")
+    @ResponseBody
+    public void downloadCaCert(HttpServletResponse response) {
+        try {
+            InputStream is = new FileInputStream(keystoreLocation);
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(is, "changeit".toCharArray());
+            String alias = "javaalias";
+
+            X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
+
+            response.setContentType("text/plain");
+            String prettyCert = prettyPrintCert(Base64.encodeBase64String(caCert.getEncoded()));
+            response.getOutputStream().write(prettyCert.getBytes(Charset.forName("UTF-8")));
+            response.flushBuffer();
+            return;
+        } catch (Exception e) {
+            logger.error("something went wrong trying to download ca cert", e);
+        }
+
+    }
+
     @RequestMapping(method= RequestMethod.POST, value="/deleteCert")
     public String postDeleteCert(Model model, Principal principal, String serial, String password, HttpSession session) {
         Security.addProvider(new BouncyCastleProvider());
@@ -72,7 +96,7 @@ public class CertificateController {
         if (appDev || cert == null) {
             throw new ForbiddenException(errorText(Certificate.class.getName(), serial, principal.getName())); //"Could not find certificate with serial number "+serial+", for user: "+principal.getName());
         }
-
+        int subscriptionId = cert.getSubscription().getId();
         if(usersDao.findByUsername(principal.getName()) != null) {
             logger.debug("password: "+password);
             Users user = usersDao.findByUsername(principal.getName());
@@ -112,7 +136,7 @@ public class CertificateController {
             return "error deleting cert";
         }
         session.setAttribute("certDeleted",true);
-        return "redirect:/myaccount";
+        return "redirect:/certs?subscriptionId="+subscriptionId;
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/deleteCert")
@@ -161,14 +185,14 @@ public class CertificateController {
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/certs")
-    public String csr(Model model, Principal principal, int subscriptionId) {
+    public String csr(Model model, Principal principal, int subscriptionId, HttpSession session) {
         if (subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName())) == null) {
             throw new ForbiddenException(errorText(Subscription.class.getName(), String.valueOf(subscriptionId), principal.getName()));
         }
         List<Certificate> certificates = certificateDao.findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(
                 new Subscription(subscriptionId), new Users(principal.getName()));
 
-        for(Certificate c:certificates) {
+        /*for(Certificate c:certificates) {
             try {
                 PemReader pemReaderCsr = new PemReader(new StringReader(prettyPrintCsr(c.getCsrText())));
                 PemObject pemObjectCsr = pemReaderCsr.readPemObject();
@@ -185,8 +209,9 @@ public class CertificateController {
                 logger.error("Error reading pem of CSR or cert");
                 logger.error(e.toString());
             }
-        }
+        }*/
 
+        model.addAttribute("certDeleted",session.getAttribute("certDeleted"));
         model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("certificates", certificates);
         model.addAttribute("certificatesSize", certificates.size());
@@ -202,14 +227,13 @@ public class CertificateController {
         model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("username", principal.getName());
 
-        List<Certificate> issuedCertificates = certificateDao
+        /*List<Certificate> issuedCertificates = certificateDao
                 .findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(
                     new Subscription(subscriptionId),
-                    new Users(principal.getName()));
+                    new Users(principal.getName()));*/
 
-
-
-        Certificate stub = certificateDao.findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(new Subscription(subscriptionId));
+        Certificate stub = certificateDao.findBySubscriptionAndSubscription_UsersAndSubjectIsNotNullAndCsrTextIsNull(
+                new Subscription(subscriptionId), new Users(principal.getName()));
 
         String subject = null;
         if (stub != null) {
@@ -241,7 +265,7 @@ public class CertificateController {
         if (subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName())) == null) {
             throw new ForbiddenException(errorText(Subscription.class.getName(), String.valueOf(subscriptionId), principal.getName()));
         }
-        logger.info("das CSR: "+csr);
+
         FileInputStream is;
         Certificate savedCert = null;
         Certificate stub = certificateDao.findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(new Subscription(subscriptionId));
@@ -256,10 +280,17 @@ public class CertificateController {
 
             PemReader pemReaderCsr = new PemReader(new StringReader(csr));
             PemObject pemObjectCsr = pemReaderCsr.readPemObject();
+            PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObjectCsr.getContent());
+            logger.info("CSR subject bytes" + Base64.encodeBase64String(pkcs10CertificationRequest.getSubject().getEncoded()));
+            logger.info("CSR subject string"+pkcs10CertificationRequest.getSubject().toString().replace(",",", "));
+
+            if(!pkcs10CertificationRequest.getSubject().toString().replace(",",", ").equals(stub.getSubject())) {
+                return "CSR subject is wrong";
+            }
+
             logger.info("the CSR: "+ Base64.encodeBase64String(pemObjectCsr.getContent()));
 
             BigInteger serial = new BigInteger( 32, new SecureRandom() );
-
             stub.setDateCreated(new Timestamp(new Date().getTime()));
             stub.setCsrText(Base64.encodeBase64String(pemObjectCsr.getContent()));
             stub.setSigned(false);

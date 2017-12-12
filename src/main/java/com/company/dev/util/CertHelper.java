@@ -42,6 +42,7 @@ public class CertHelper {
         Security.addProvider(new BouncyCastleProvider());
         X509Certificate x509Certificate = null;
         try {
+            logger.debug("certificate.getCertText is null? "+ (certificate.getCertText() == null));
             PemReader pemReaderCert = new PemReader(new StringReader(prettyPrintCert(certificate.getCertText())));
             PemObject pemObjectCert = pemReaderCert.readPemObject();
             X509CertificateHolder x509CertificateHolder = new X509CertificateHolder(pemObjectCert.getContent());
@@ -62,15 +63,15 @@ public class CertHelper {
         try {
             Identities identitiesSubject = identitiesDao.findByData(x500name.getEncoded());
             Certificates certificates = certificatesDao.findByData(x509Certificate.getEncoded());
-            logger.warn("identity id: "+identitiesSubject.getId());
-            logger.warn("certificates id: "+certificates.getId());
+            logger.debug("identity id: "+identitiesSubject.getId());
+            logger.debug("certificates id: "+certificates.getId());
 
 /* todo: why doesn't this work?
              * certificateIdentityDao.findByCertificateAndIdentity(identitiesSubject.getId(), certificates.getId());
              */
 
             CertificateIdentity ci = certificateIdentityDao.findByCertificate(certificates.getId());
-            logger.warn("ci: "+ci.getCertificate()+", "+ci.getIdentity());
+            logger.debug("ci: "+ci.getCertificate()+", "+ci.getIdentity());
             certificateIdentityDao.delete(ci);
             PeerConfigs peerConfigs = peerConfigsDao.findByRemoteId(Integer.toString(identitiesSubject.getId()));
             PeerConfigChildConfig peerConfigChildConfig = peerConfigChildConfigDao.findByPeerCfg(peerConfigs.getId());
@@ -93,8 +94,9 @@ public class CertHelper {
             return ret;
         } catch (Exception e) {
             logger.error("didn't delete",e);
+        } finally {
+            return ret;
         }
-        return "we shouldn't have gotten here";
     }
 
     public boolean hasActiveConnection(String subject) {

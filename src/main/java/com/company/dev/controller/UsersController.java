@@ -138,13 +138,6 @@ public class UsersController {
         return "footer";
     }
 
-    @RequestMapping("/greeting")
-    public String greeting(@RequestParam(value="name", required=false, defaultValue="World") String name, Model model, HttpSession session) {
-        model.addAttribute("name", name);
-        model.addAttribute("captchaToken", session.getAttribute("captchaToken"));
-        return "greeting";
-    }
-
     @RequestMapping(method=RequestMethod.GET, value = "/howitworks")
     public String howItWorks(Model model) {
         logger.info("GET /howitworks");
@@ -169,16 +162,9 @@ public class UsersController {
         return "signin";
     }
 
-    @RequestMapping(method=RequestMethod.GET, value = "/faq")
-    public String faq(Model model) {
-        logger.info("GET /faq");
-        return "faq";
-    }
-
     @RequestMapping(method=RequestMethod.POST, value = "/login")
     public String loginPost(String username, String password, HttpSession session, Model model) {
         logger.info("POST /login");
-       /* try {*/
         if (usersDao.findByUsername(username) != null) {
             logger.debug("username: " + username + ", password: " + password);
             Users user = usersDao.findByUsername(username);
@@ -190,9 +176,6 @@ public class UsersController {
             }
             session.setAttribute("username", user.getUsername());
             logger.info("/login username---->" + username);
-/*
-        } catch (Exception ex) {
-*/
         } else {
             SecureRandom random = new SecureRandom();
             byte slt[] = new byte[8];
@@ -216,7 +199,6 @@ public class UsersController {
         String captchaToken = currGcage.getTokenGenerator().next();
         logger.debug("captchaToken: "+captchaToken);
 
-        //Setting the captcha token in http session
         session.setAttribute("captchaToken", captchaToken);
 
         response.setContentType("image/jpeg");

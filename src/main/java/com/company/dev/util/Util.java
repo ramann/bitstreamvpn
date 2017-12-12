@@ -54,10 +54,6 @@ public class Util {
     private static final Logger logger = LoggerFactory.getLogger(Util.class);
     public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     public static final String END_CERT = "-----END CERTIFICATE-----";
-//    public static int[] durations = {72, 168, 720};
-
-    // let's say 0.02 USD/hour
-//    public static final double pricePerUnit = 0.02;
 
     public static String performNSLookup(String name) {
         InetAddress inetHost = null;

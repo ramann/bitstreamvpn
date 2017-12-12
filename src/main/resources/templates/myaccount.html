@@ -27,7 +27,7 @@
             <div class="row" th:each="sp : ${subscriptionPresentations}">
                 <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${sp.id}"></div>
                 <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Name:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${sp.subscriptionPackage.name}"></div>
-                <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Price:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="'$'+${sp.subscriptionPackage.price}"></div>
+                <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Price:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="'$'+${#numbers.formatDecimal(sp.subscriptionPackage.price, 0, 'DEFAULT', 2, 'DEFAULT')}"></div>
                 <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Payments:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6"><a th:href="'/payments?subscriptionId='+${sp.id}">payments</a></div>
                 <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Certs:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6"><a th:href="'/certs?subscriptionId='+${sp.id}">certificates</a></div>
                 <div th:if="${sp.active}" class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Status:</div><div class="col-lg-4 col-md-6 col-sm-6 col-xs-6" th:if="${sp.active}" th:text="${sp.desc}"></div>

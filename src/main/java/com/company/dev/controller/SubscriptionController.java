@@ -37,7 +37,7 @@ public class SubscriptionController {
         logger.info("entered /addSubscription");
         List<SubscriptionPackage> subscriptionPackages = subscriptionPackageDao.findAll();
         for (SubscriptionPackage sp: subscriptionPackages) {
-            sp.setBytes(sp.getBytes().divide(new BigInteger("1000").pow(3)));
+            sp.setBytes(sp.getBytes().divide(new BigInteger("1000").pow(3))); //TODO: Can we do this with thymeleaf?
         }
         model.addAttribute("subscriptionPackages", subscriptionPackages);
         model.addAttribute("username", principal.getName());
@@ -55,7 +55,7 @@ public class SubscriptionController {
         Subscription subscription = new Subscription(subPackage,
                 new Users(principal.getName()), new Timestamp(new Date().getTime()));
         Subscription savedSubscription = subscriptionDao.save(subscription);
-        logger.info("saved id ("+savedSubscription.getId()+"), subscriptionPackage is "+savedSubscription.getSubscriptionPackage());
+
         return "redirect:/payments?subscriptionId="+savedSubscription.getId(); //"redirect:/myaccount";
     }
 
@@ -70,18 +70,22 @@ public class SubscriptionController {
             List<Payment> payments = paymentDao.findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
                     s,new Users(principal.getName()));
 
-            boolean isActive = false;
-            String activeUntil = "";
-            for (int i=payments.size()-1; i>=0 && !isActive; i--) {
+            boolean isCurrent = false;
+            String statusMessage = "";
+            for (int i=payments.size()-1; i>=0 && !isCurrent; i--) {
                 Date now = new Date();
                 if (now.before(payments.get(i).getDateEnd())) {
-                    isActive = true;
-                    activeUntil = "active (until " + dateToGMT(payments.get(i).getDateEnd())+")";
-                    logger.warn(activeUntil);
+                    isCurrent = true;
+                    if(payments.get(i).getBandwidth().compareTo(s.getSubscriptionPackage().getBytes()) >= 0) {
+                        statusMessage = "inactive (due to high bandwidth usage)";
+                    } else {
+                        statusMessage = "active (until " + dateToGMT(payments.get(i).getDateEnd()) + ")";
+                    }
+                    logger.warn(statusMessage);
                 }
             }
 
-            SubscriptionPresentation sp = new SubscriptionPresentation(s,isActive, activeUntil);
+            SubscriptionPresentation sp = new SubscriptionPresentation(s,isCurrent, statusMessage);
 
             subscriptionPresentations.add(sp);
         }

@@ -10,18 +10,14 @@
     <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="jumbotron">
         <div class="container">
-            <h1 class="display-5">Your New Cert</h1>
+            <h1 class="display-5">Your New Certificate</h1>
             <p th:text="'(for subscription #'+${subscriptionId}+')'"></p>
         </div>
     </div>
-
     <div class="container">
+        <div class="alert alert-success">Your certificate has been issued.</div>
         Create /etc/ipsec.d/certs/vpn_client.pem with the below contents:
-
-
-    <pre th:text="${certText}"></pre>
-
-
+        <pre th:text="${certText}"></pre>
     </div>
 </main>
 </body>

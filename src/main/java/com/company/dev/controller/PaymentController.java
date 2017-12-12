@@ -52,7 +52,6 @@ public class PaymentController {
 
     @RequestMapping(method= RequestMethod.POST, value="/addPayment")
     public String addPayment(Model model, Principal principal, HttpSession session, int subscriptionId) {
-        logger.info("/addPayment");
 
         Subscription subscription = subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName()));
         if (subscription == null) {
@@ -131,18 +130,6 @@ public class PaymentController {
         }
         Date now = new Date();
         Timestamp tenMinsAgo = addDuration(new Timestamp(now.getTime()),-10, Calendar.MINUTE);
-        logger.info("ten minutes ago: "+tenMinsAgo);
-
-        // mark payments not received on time as "in error"
-        // TODO: this can be moved to a scheduled task
-        /*List<Payment> paymentsNotReceivedInTime = paymentDao.findBySubscriptionAndDateInitiatedIsNullAndInErrorIsFalseAndDateCreatedIsLessThanEqual(subscription,
-                tenMinsAgo);
-        logger.info("paymentsNotReceivedInTime: "+paymentsNotReceivedInTime.size());
-        for(Payment p: paymentsNotReceivedInTime) {
-            p.setInError(true);
-            paymentDao.save(p);
-        }*/
-
 
         List<Payment> confirmedPayments = paymentDao.findBySubscriptionAndSubscription_UsersAndDateConfirm1IsNotNullAndInErrorIsFalseOrderByDateConfirm1Asc(
                 subscription,
@@ -150,12 +137,8 @@ public class PaymentController {
         List<Payment> processingPayments = paymentDao.findBySubscriptionAndSubscription_UsersAndDateInitiatedIsNotNullAndDateConfirm1IsNullAndInErrorIsFalseOrderByDateCreatedAsc(
                 subscription,
                 users);
-        List<PaymentPresentation> processingPaymentPresentations = new ArrayList<PaymentPresentation>();
-        for (Payment p: processingPayments) {
-            processingPaymentPresentations.add(new PaymentPresentation(p));
-        }
 
-        List<PaymentPresentation> confirmedPaymentPresentations = new ArrayList<PaymentPresentation>();
+        List<PaymentPresentation> confirmedPaymentPresentations = new ArrayList<PaymentPresentation>(); // TODO: can we do this with thymeleaf?
         for(Payment p:confirmedPayments) {
             BigDecimal gigabytes = Util.bytesToGigabytes(p.getBandwidth()); //new BigDecimal(p.getBandwidth()).divide(new BigDecimal("1000").pow(3)).setScale(2, RoundingMode.HALF_UP);
             confirmedPaymentPresentations.add(new PaymentPresentation(p, gigabytes.toPlainString()));
@@ -165,7 +148,7 @@ public class PaymentController {
 
         model.addAttribute("subscriptionId", subscriptionId);
         model.addAttribute("confirmedPaymentPresentations", confirmedPaymentPresentations);
-        model.addAttribute("processingPaymentPresentations", processingPaymentPresentations);
+        model.addAttribute("processingPayments", processingPayments);
         model.addAttribute("confirmedPaymentsSize", confirmedPayments.size());
         model.addAttribute("processingPaymentsSize", processingPayments.size());
         model.addAttribute("username",principal.getName());
@@ -174,13 +157,11 @@ public class PaymentController {
 
     @RequestMapping(method=RequestMethod.GET, value="/qrcode")
     public void qrcode(Principal principal, HttpServletResponse response, int paymentId) {
-        logger.info("entered /qrcode");
 
         Payment unconfirmedPayment = paymentDao.findByIdAndSubscription_UsersAndDateInitiatedIsNullAndInErrorIsFalse(paymentId, new Users(principal.getName()));
         if (unconfirmedPayment == null) {
             throw new ForbiddenException(errorText(Payment.class.getName(), String.valueOf(paymentId),principal.getName()));
         }
-        logger.info("user for payment: "+unconfirmedPayment.getSubscription().getUsers());
 
         String qrCodeData = "bitcoin:"+unconfirmedPayment.getReceivingAddress()+"?amount="+ unconfirmedPayment.getAmountExpecting(); // +"?amount=0.1234";
         int qrCodeWidth = 200;

@@ -25,5 +25,6 @@ public interface CertificateDao extends CrudRepository<Certificate, Long> {
     public List<Certificate> findBySubscriptionAndSubscription_UsersAndCertTextIsNotNullOrderByDateCreated(Subscription subscription, Users users);
     public Certificate findBySerialAndSubscription_Users(long serial, Users users);
     public Certificate findBySubscriptionAndSubjectIsNotNullAndCsrTextIsNull(Subscription subscription);
+    public Certificate findBySubscriptionAndSubscription_UsersAndSubjectIsNotNullAndCsrTextIsNull(Subscription subscription, Users users);
 
 } // class UserDao

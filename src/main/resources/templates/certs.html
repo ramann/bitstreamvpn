@@ -16,7 +16,7 @@
     </div>
 
     <div class="container">
-
+    <div th:if="${certDeleted}" class="alert alert-success">Your certificate has been deleted.</div>
     <div th:if="${certificatesSize == 0}">You don't have any certificates associated with this subscription.</div>
         <div class="row d-none d-lg-flex" th:unless="${certificatesSize == 0}">
             <div class="col-lg-2">Serial</div>
@@ -32,21 +32,6 @@
             <hr class="d-lg-none col-lg-3 col-md-3 col-sm-3 col-xs-3 right-align" style="width: 100%;"/>
         </div>
 
-
-    <!--<div style="overflow-x:auto;">
-    <table th:unless="${certificatesSize == 0}" th:classappend="table">
-        <tr>
-            <th>Certificate</th>
-            <th>Download</th>
-            <th>Delete?</th>
-        </tr>
-        <tr th:each="certificate : ${certificates}">
-            <td><pre th:text="${certificate.certText}">certificate text</pre></td>
-            <td><a th:href="'/downloadCert?serial='+${certificate.serial}">download</a></td>
-            <td><a th:href="'/deleteCert?serial='+${certificate.serial}">delete</a></td>
-        </tr>
-    </table>
-    </div>-->
     <a th:href="'/addCert?subscriptionId='+${subscriptionId}">Add a certificate</a>
 
 
