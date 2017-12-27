@@ -1,1 +1,0 @@
-INSERT INTO testipsecdb.peer_configs (name, ike_version, ike_cfg, local_id, remote_id, cert_policy, uniqueid, auth_method, eap_type, eap_vendor, keyingtries, rekeytime, reauthtime, jitter, overtime, mobike, dpd_delay, virtual, pool, mediation, mediated_by, peer_id) VALUES ('rw', 2, 1, '4', '7', 1, 0, 1, 0, 0, 3, 7200, 0, 180, 300, 1, 120, null, 'bigpool', 0, 0, 0);

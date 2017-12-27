@@ -1,1 +1,0 @@
-INSERT INTO testipsecdb.peer_config_child_config (peer_cfg, child_cfg) VALUES (1, 1);

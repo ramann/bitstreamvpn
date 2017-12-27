@@ -19,7 +19,9 @@ There are four Docker containers:
 - webapp
     - This is a Spring Boot app which serves as the front-end. Thymeleaf is used for templating, and Gradle is used for building. Bootstrap is used for the UI.
     - The webapp has the Subscription and Payment logic, and is also responsible for issuing certificates based on the user's CSR.
-    
+
+##Set up keystore
+`cd ipsec-pki ; bash -x buildKeystore.sh`    
     
 ##Building
 - strongswan:  `docker build -t="ramann/bitstreamvpn:strongswan" docker/strongswan`

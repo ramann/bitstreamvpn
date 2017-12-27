@@ -1,1 +1,0 @@
-INSERT INTO testipsecdb.ike_configs (certreq, force_encap, local, remote) VALUES (1, 0, '174.138.46.113', '0.0.0.0');

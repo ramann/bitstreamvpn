@@ -1,2 +1,0 @@
-INSERT INTO testipsecdb.traffic_selectors (type, protocol, start_addr, end_addr, start_port, end_port) VALUES (7, 0, null, null, 0, 65535);
-INSERT INTO testipsecdb.traffic_selectors (type, protocol, start_addr, end_addr, start_port, end_port) VALUES (7, 0, null, null, 0, 65535);
