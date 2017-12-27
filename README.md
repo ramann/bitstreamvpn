@@ -27,14 +27,9 @@ You will need Java, Gradle, and Docker installed.
 `sudo apt-get install strongswan` (need this for ipsec pki. will move commands to use openssl later)
 
 `cd ipsec-pki ; bash -x buildKeystore.sh`    
-    
-## Building images
-- strongswan:  `docker build -t="ramann/bitstreamvpn:strongswan" docker/strongswan`
-- bitcoin: `docker build -t="ramann/bitstreamvpn:bitcoin" docker/bitcoin`
-- db: `docker build -t="ramann/bitstreamvpn:db" docker/db`
-- webapp: `./gradlew build buildDocker`
 
-## Running
-- `docker-compose up`
+## Build webapp
+`./gradlew build buildDocker`
 
-
+## Run (this will build the other images)
+- `docker-compose up -d`
