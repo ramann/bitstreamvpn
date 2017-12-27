@@ -7,8 +7,7 @@ import org.springframework.stereotype.Repository;
 import javax.transaction.Transactional;
 import java.util.List;
 
-@Transactional
-@Repository
+@Transactional //@Repository
 public interface ConnectionsDao extends CrudRepository<Connections, Long> {
 
     public List<Connections> findByPeerIdAndDisconnected(String peerId, boolean disconnected);

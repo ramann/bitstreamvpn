@@ -18,7 +18,7 @@
     <div class="container">
         <div class="row">
 
-
+    <div th:if="${error}" class="alert alert-danger">There was an error when adding your certificate. Make sure you use the commands shown below when generating your CSR.</div>
     <form name="f" th:action="@{/addCert}" method="post">
         <div>Run the following commands in your terminal. Then, paste the output (including the BEGIN and END lines) in the below text box.</div>
         <pre th:text="${command}">

@@ -65,9 +65,35 @@ public class CertificateController {
     @Autowired
     CertHelper certHelper;
 
+    @RequestMapping(method=RequestMethod.GET, value="/ourcert")
+    @ResponseBody
+    public void downloadPublicCert(HttpServletResponse response, int cert) {
+        try {
+            InputStream is = new FileInputStream(keystoreLocation);
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(is, "changeit".toCharArray());
+            String alias = "javaserveralias";
+
+            if(cert == 1) {
+                alias= "javaalias";
+            }
+
+            X509Certificate x509Certificate = (X509Certificate) keyStore.getCertificate(alias);
+            response.setContentType("text/plain");
+            String prettyCert = prettyPrintCert(Base64.encodeBase64String(x509Certificate.getEncoded()));
+            response.getOutputStream().write(prettyCert.getBytes(Charset.forName("UTF-8")));
+            response.flushBuffer();
+            return;
+        } catch (Exception e) {
+            logger.error("something went wrong trying to download cert "+cert, e);
+        }
+
+    }
+
     @RequestMapping(method=RequestMethod.GET, value="/cacert")
     @ResponseBody
-    public void downloadCaCert(HttpServletResponse response) {
+    public void downloadEndpointCert(HttpServletResponse response) {
         try {
             InputStream is = new FileInputStream(keystoreLocation);
 
@@ -75,10 +101,13 @@ public class CertificateController {
             keyStore.load(is, "changeit".toCharArray());
             String alias = "javaalias";
 
-            X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
+            X509Certificate serverCert = (X509Certificate) keyStore.getCertificate("javaserveralias");
+
+
+//            X509Certificate caCert = (X509Certificate) keyStore.getCertificate("javaalias");
 
             response.setContentType("text/plain");
-            String prettyCert = prettyPrintCert(Base64.encodeBase64String(caCert.getEncoded()));
+            String prettyCert = prettyPrintCert(Base64.encodeBase64String(serverCert.getEncoded()));
             response.getOutputStream().write(prettyCert.getBytes(Charset.forName("UTF-8")));
             response.flushBuffer();
             return;
@@ -220,7 +249,7 @@ public class CertificateController {
     }
 
     @RequestMapping(method=RequestMethod.GET, value="/addCert")
-    public String addCert(Model model, Principal principal, HttpSession session, int subscriptionId) {
+    public String addCert(Model model, Principal principal, HttpSession session, int subscriptionId, boolean error) {
         if(subscriptionDao.findByIdAndUsers(subscriptionId, new Users(principal.getName())) == null) {
             throw new ForbiddenException(errorText(Subscription.class.getName(), String.valueOf(subscriptionId), principal.getName()));
         }
@@ -250,7 +279,7 @@ public class CertificateController {
             "sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '"+
             subject.replace(", ","/").replace("C=", "/C=")+"'";
         model.addAttribute("command", command);
-
+        model.addAttribute("error", error);
         return "addCert";
     }
 
@@ -285,7 +314,7 @@ public class CertificateController {
             logger.info("CSR subject string"+pkcs10CertificationRequest.getSubject().toString().replace(",",", "));
 
             if(!pkcs10CertificationRequest.getSubject().toString().replace(",",", ").equals(stub.getSubject())) {
-                return "CSR subject is wrong";
+                return "redirect:/addcert?error=true";
             }
 
             logger.info("the CSR: "+ Base64.encodeBase64String(pemObjectCsr.getContent()));
@@ -320,7 +349,7 @@ public class CertificateController {
             certHelper.insertIpsecRecordsForClient(x509Certificate, keystoreLocation);
         } catch (Exception e) {
             out.println("Exception: "+e);
-            return "Arghh!"; //create a nice error page.
+            return "redirect:/addcert?error=true";
         }
         //session.setAttribute("certAdded", true);
 

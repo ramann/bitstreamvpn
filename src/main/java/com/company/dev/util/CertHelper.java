@@ -56,9 +56,9 @@ public class CertHelper {
         return x509Certificate;
     }
 
-    public String deleteIpsecRecordsForClient(X509Certificate x509Certificate) {
+    public boolean deleteIpsecRecordsForClient(X509Certificate x509Certificate) {
         logger.warn("entered deleteIpsecRecordsForClient");
-        String ret = "starting";
+        boolean ret = false;
         X500Name x500name = subjBytesToX500Name(x509Certificate.getSubjectX500Principal().getEncoded());
         try {
             Identities identitiesSubject = identitiesDao.findByData(x500name.getEncoded());
@@ -90,10 +90,10 @@ public class CertHelper {
             certificatesDao.delete(certificates);
             identitiesDao.delete(identitiesSubject);
 
-            ret = "did work";
-            return ret;
+            ret = true;
         } catch (Exception e) {
             logger.error("didn't delete",e);
+            ret = false;
         } finally {
             return ret;
         }

@@ -24,23 +24,23 @@
             <h3>Edit config</h3>
             <div>Edit /etc/ipsec.conf so that it has the below contents:
             <pre>
-                charondebug="ike 2, cfg 2"
+charondebug="ike 2, cfg 2"
 
-                conn bitstreamvpn
-                    rightsubnet=0.0.0.0/0
-                    keyexchange=ikev2
-                    auto=add
-                    right=
-                    leftsourceip=%modecfg
-                    rightcert=bitstreamvpn-endpoint.pem
-                    leftcert=vpn_client.pem
+conn bitstreamvpn
+    rightsubnet=0.0.0.0/0
+    keyexchange=ikev2
+    auto=add
+    right=
+    leftsourceip=%modecfg
+    rightcert=bitstreamvpn-endpoint.pem
+    leftcert=vpn_client.pem
             </pre>
             </div>
         </div>
         <div class="padding-bottom">
             <h3>Install our certificates</h3>
-            <div>Download our <a href="#">CA certificate</a> and put it in /etc/ipsec.d/cacerts/bitstreamvpn-ca.pem</div>
-            <div>Also, download our <a href="#">endpoint certificate</a> and put it in /etc/ipsec.d/certs/bitstreamvpn-endpoint.pem</div>
+            <div>Download our <a href="/ourcert?cert=1">CA certificate</a> and put it in /etc/ipsec.d/cacerts/bitstreamvpn-ca.pem</div>
+            <div>Also, download our <a href="/ourcert?cert=2">endpoint certificate</a> and put it in /etc/ipsec.d/certs/bitstreamvpn-endpoint.pem</div>
         </div>
         <!--<div class="padding-bottom">
             <h3>How long do I have to wait for my payment to be confirmed?</h3>
@@ -50,7 +50,7 @@
             <h3>Create a CSR</h3>
             <div>We'll give you some commands like
                 <pre>sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
-                sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=d2a2419d-e6d0-46f7-9f58-23c2c2f210d8'</pre>. Run these in your terminal and give us the output to receive your certificate.</div>
+sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=d2a2419d-e6d0-46f7-9f58-23c2c2f210d8'</pre>. Run these in your terminal and give us the output to receive your certificate.</div>
         </div>
         <div class="padding-bottom">
             <h3>Install your certificate</h3>
