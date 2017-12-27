@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ipsec pki --gen > caKey.der
-ipsec pki --self --in caKey.der --dn "C=CH, O=test, CN=testCA" --ca > caCert.der
+ipsec pki --self --in caKey.der --dn "C=US, O=test, CN=testCA" --ca > caCert.der
 ipsec pki --gen > peerKey.der
 ipsec pki --pub --in peerKey.der | ipsec pki --issue --cacert caCert.der --cakey caKey.der \
                                              --dn "C=US, O=test, CN=peer2" > peerCert.der
