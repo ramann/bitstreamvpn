@@ -33,3 +33,11 @@ You will need Java, Gradle, and Docker installed.
 
 ## Run (this will build the other images)
 - `docker-compose up -d`
+
+## Make Payment (this uses the regtest network)
+
+### Connect bitcoin wallet
+`bitcoin-qt -datadir=/home/ram/bob-datadir -port=19444 -rpcport=19332 -rpcuser=bob -rpcpassword=bobpass -connect=172.20.0.1:18333 -regtest -server -listen -debug`
+
+### Generate block
+`bitcoin-cli -regtest -rpcport=19332 -rpcuser=bob -rpcpassword=bobpass generate 1`
