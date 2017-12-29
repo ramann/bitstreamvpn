@@ -30,7 +30,7 @@ conn bitstreamvpn
     rightsubnet=0.0.0.0/0
     keyexchange=ikev2
     auto=add
-    right=
+    right=bitstreamvpn.com
     leftsourceip=%modecfg
     rightcert=bitstreamvpn-endpoint.pem
     leftcert=vpn_client.pem
@@ -63,7 +63,5 @@ sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem 
     </div>
 
 </main>
-<!--/* Footer fragment */-->
-<footer th:replace="footer :: footer" class="text-center">&copy; 2017 Default Footer</footer>
 </body>
 </html>
