@@ -26,5 +26,4 @@ keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeyst
 openssl pkcs12 -export -out javaserver.p12 -name javaserveralias -in peerCert.pem -inkey peerKey.pem -password pass:testing
 
 # import pkcs12 server bundle into keystore
-keytool -importkeystore -destkeystore server.keystore -srckeystore javaserver.p12 -srcstoretype PKCS12 -srcstorepass testing -alias javaserveralias
-# use password changeit
+keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore server.keystore -srckeystore javaserver.p12 -srcstoretype PKCS12 -srcstorepass testing -alias javaserveralias
