@@ -28,11 +28,6 @@ public class ScheduledTasks {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
-    @Scheduled(fixedRate = 60000)
-    public void reportCurrentTime() {
-        logger.info("The time is now {}", dateFormat.format(new Date()));
-    }
-
     /* connections should be disallowed if (1) the subscription is inactive, or (2) the bandwidth limit has been exceeded */
     @Scheduled(fixedRate=300000) // 5 mins
     public void removeCertificates() {
