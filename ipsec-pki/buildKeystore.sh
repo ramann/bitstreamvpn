@@ -4,7 +4,7 @@ ipsec pki --gen > caKey.der
 ipsec pki --self --in caKey.der --dn "C=US, O=test, CN=testCA" --ca > caCert.der
 ipsec pki --gen > peerKey.der
 ipsec pki --pub --in peerKey.der | ipsec pki --issue --cacert caCert.der --cakey caKey.der \
-                                             --dn "C=US, O=test, CN=peer2" > peerCert.der
+          --dn "C=US, O=test, CN=peer2" --san 104.236.219.189 > peerCert.der
 openssl pkey -inform DER -in caKey.der -outform PEM -out caKey.pem
 openssl x509 -inform DER -in caCert.der -outform PEM -out caCert.pem
 openssl pkey -inform DER -in peerKey.der -outform PEM -out peerKey.pem
