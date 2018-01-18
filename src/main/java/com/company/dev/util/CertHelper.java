@@ -88,6 +88,13 @@ public class CertHelper {
             ikeConfigsDao.delete(ikeConfigsDao.findById(peerConfigs.getIkeCfg()));
             peerConfigsDao.delete(peerConfigs);
             certificatesDao.delete(certificates);
+
+            List<Addresses> addressesUsedByCert = addressesDao.findByIdentityIs(identitiesSubject.getId());
+            for(Addresses a: addressesUsedByCert) {
+                a.setIdentity(0);
+                addressesDao.save(a);
+            }
+
             identitiesDao.delete(identitiesSubject);
 
             ret = true;

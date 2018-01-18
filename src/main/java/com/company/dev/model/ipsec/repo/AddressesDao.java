@@ -10,6 +10,5 @@ import java.util.List;
 @Transactional
 public interface AddressesDao extends CrudRepository<Addresses, Long> {
 
-    public List<Addresses> findByIdentityAndReleased(int identities, int released);
-
+    public List<Addresses> findByIdentityIs(int identity);
 }
