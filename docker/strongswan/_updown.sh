@@ -328,7 +328,7 @@ down-client:)
       fi
     fi
 
-    NFLOG_GROUP=$(python /usr/local/bin/ipsec/get_nflog_from_peerid.py "$PLUTO_PEER_ID")
+    NFLOG_GROUP=$(python /usr/local/bin/ipsec/set_disconnected.py "$PLUTO_PEER_ID")
 #    echo "$NFLOG_GROUP." >> /tmp/disconnected_nflog_groups
     iptables -t nat -D POSTROUTING -s $PLUTO_PEER_CLIENT -o eth0 -j MASQUERADE
 

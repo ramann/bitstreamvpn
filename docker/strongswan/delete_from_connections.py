@@ -6,9 +6,6 @@ import sys
 
 con = mdb.connect('db', 'testipsecuser', 'testing', 'testipsecdb');
 
-#id = sys.argv[1]
-#id = str(int(float(id)))
-
 with con:
 
     cur = con.cursor()
