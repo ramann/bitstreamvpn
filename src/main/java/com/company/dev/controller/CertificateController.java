@@ -2,6 +2,7 @@ package com.company.dev.controller;
 
 import com.company.dev.model.app.domain.Certificate;
 import com.company.dev.model.app.domain.Subscription;
+import com.company.dev.model.app.domain.SubscriptionPackage;
 import com.company.dev.model.app.domain.Users;
 import com.company.dev.model.app.repo.CertificateDao;
 import com.company.dev.model.app.repo.SubscriptionDao;
@@ -357,6 +358,13 @@ public class CertificateController {
         model.addAttribute("subscriptionId", subscriptionId);
         return "certAdded";
         //return "redirect:/myaccount"; //?purchaseId="+purchaseId;
+    }
+
+    @RequestMapping(method= RequestMethod.GET, value="/resetCerts")
+    public void resetCerts(Model model, Principal principal, int subscription) {
+        logger.info("entered resetCerts");
+        certHelper.insertCertsIpsec(subscriptionDao.findByIdAndUsers( subscription,new Users(principal.getName()) ));
+        logger.info("exiting resetCerts");
     }
 
     @Autowired

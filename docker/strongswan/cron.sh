@@ -9,10 +9,10 @@ while read in
 do
     group=$(echo $in | awk '{for(i=1;i<=NF;i++) if ($i=="nflog-group") print $(i+1)}')
     bytes=$(echo $in | awk '{print $2}')
-    NFLOG_GROUP=$(python /usr/local/bin/ipsec/update.py "$group" "$bytes")
+    NFLOG_GROUP=$(python /usr/local/bin/ipsec/update_payment_with_bandwidth.py "$group" "$bytes")
 done < /tmp/iptables-nflog-groups
 
-# create iptables delete rules for clients that have disconnected
+# delete from connections table and create iptables delete rules for clients that have disconnected
 python /usr/local/bin/ipsec/delete_from_connections.py
 
 # delete stale rules
@@ -20,7 +20,7 @@ bash -x /tmp/iptables_rules
 rm /tmp/iptables_rules
 
 # if there is no identity in DB for an active connection instance, bring down that connection instance
-# todo: When would this occur?
+# todo: When would this occur? if a bandwidth limit is exceeded?
 ipsec status | grep ESTABLISHED > /tmp/established
 
 while read in

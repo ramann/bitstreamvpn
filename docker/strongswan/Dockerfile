@@ -28,7 +28,7 @@ RUN mkdir -p /usr/src/strongswan \
 
 ADD strongswan.conf /etc/strongswan.conf
 ADD insert.py /usr/local/bin/ipsec/insert.py
-ADD update.py /usr/local/bin/ipsec/update.py
+ADD update_payment_with_bandwidth.py /usr/local/bin/ipsec/update_payment_with_bandwidth.py
 ADD set_disconnected.py /usr/local/bin/ipsec/set_disconnected.py
 ADD delete_from_connections.py /usr/local/bin/ipsec/delete_from_connections.py
 ADD identity_exists.py /usr/local/bin/ipsec/identity_exists.py
