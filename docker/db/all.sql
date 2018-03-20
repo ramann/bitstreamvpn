@@ -246,7 +246,9 @@ CREATE TABLE certificates (
   `type` tinyint(3) unsigned NOT NULL,
   `keytype` tinyint(3) unsigned NOT NULL,
   `data` BLOB NOT NULL,
-  PRIMARY KEY (`id`)
+  `identity` int(10) unsigned,
+  PRIMARY KEY (`id`),
+  CONSTRAINT FK_IdentityCertificates FOREIGN KEY (identity) REFERENCES identities(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 DROP TABLE IF EXISTS certificate_identity;

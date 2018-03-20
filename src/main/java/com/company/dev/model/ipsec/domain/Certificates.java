@@ -10,6 +10,7 @@ public class Certificates {
     private byte type;
     private byte keytype;
     private byte[] data;
+    private int identity;
 
     public Certificates() {}
 
@@ -58,6 +59,16 @@ public class Certificates {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    @Basic
+    @Column(name = "identity", nullable = true)
+    public int getIdentity() {
+        return identity;
+    }
+
+    public void setIdentity(int identity) {
+        this.identity = identity;
     }
 
     @Override
