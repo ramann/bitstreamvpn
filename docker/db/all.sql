@@ -128,8 +128,10 @@ CREATE TABLE `identities` (
   `id` int(10) unsigned NOT NULL auto_increment,
   `type` tinyint(4) unsigned NOT NULL,
   `data` varbinary(200) NOT NULL,
+  `certificate` int(10) unsigned,
   PRIMARY KEY (`id`),
-  UNIQUE (`type`, `data`)
+  UNIQUE (`type`, `data`),
+  CONSTRAINT FK_IdentityCertificates FOREIGN KEY (certificate) REFERENCES certificates(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 DROP TABLE IF EXISTS `child_configs`;
@@ -246,9 +248,7 @@ CREATE TABLE certificates (
   `type` tinyint(3) unsigned NOT NULL,
   `keytype` tinyint(3) unsigned NOT NULL,
   `data` BLOB NOT NULL,
-  `identity` int(10) unsigned,
-  PRIMARY KEY (`id`),
-  CONSTRAINT FK_IdentityCertificates FOREIGN KEY (identity) REFERENCES identities(id)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 DROP TABLE IF EXISTS certificate_identity;

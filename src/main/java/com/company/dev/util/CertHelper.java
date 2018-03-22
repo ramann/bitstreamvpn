@@ -167,16 +167,16 @@ public class CertHelper {
             logger.info("cert subj: " + DatatypeConverter.printHexBinary(x500name.getEncoded())+
                     ", cert: "+ DatatypeConverter.printHexBinary(x509Certificate.getEncoded()));
 
-            Identities identities = new Identities((byte) 9, x500name.getEncoded());
-            Identities savedIdentities = identitiesDao.save(identities);
-            logger.info("done with saved identites");
-            logger.info("savedIdentities is null? "+(savedIdentities == null));
-
             Certificates certificates = new Certificates((byte) 1, (byte) 1, x509Certificate.getEncoded());
-            certificates.setIdentity(savedIdentities.getId());
             Certificates savedCertificates = certificatesDao.save(certificates);
             logger.info("done with saved certificates");
             logger.info("savedCertificates is null? "+(savedCertificates == null));
+
+            Identities identities = new Identities((byte) 9, x500name.getEncoded());
+            identities.setCertificate(savedCertificates.getId());
+            Identities savedIdentities = identitiesDao.save(identities);
+            logger.info("done with saved identites");
+            logger.info("savedIdentities is null? "+(savedIdentities == null));
 
             CertificateIdentity certificateIdentity = new CertificateIdentity(savedCertificates.getId(), savedIdentities.getId());
             CertificateIdentity savedCertificateIdentity = certificateIdentityDao.save(certificateIdentity);

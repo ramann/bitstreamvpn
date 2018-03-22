@@ -9,6 +9,7 @@ public class Identities {
     private int id;
     private byte type;
     private byte[] data;
+    private int certificate;
 
     public Identities() {}
 
@@ -47,6 +48,17 @@ public class Identities {
     public void setData(byte[] data) {
         this.data = data;
     }
+
+    @Basic
+    @Column(name = "certificate", nullable = false)
+    public int getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(int certificate) {
+        this.certificate = certificate;
+    }
+
 
     @Override
     public boolean equals(Object o) {

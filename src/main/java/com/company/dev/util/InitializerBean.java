@@ -108,10 +108,12 @@ public class InitializerBean implements CommandLineRunner {
             logger.debug("getName ca encoded: " + DatatypeConverter.printHexBinary(caCert.getSubjectX500Principal().getEncoded()));
             logger.debug(DatatypeConverter.printHexBinary(caCert.getEncoded()));
             Identities caSubjectIdentity = new Identities((byte) 9, caCert.getSubjectX500Principal().getEncoded());
+            caSubjectIdentity.setCertificate(savedCaCertificates.getId());
             Identities savedCaSubjectIdentity = identitiesDao.save(caSubjectIdentity);
 
             /* Insert CA identity (pub key id) */
             Identities caPubKeyIdentity = new Identities((byte) 11, new DigestUtils().sha1(caCert.getPublicKey().getEncoded()));
+            caPubKeyIdentity.setCertificate(savedCaCertificates.getId());
             Identities savedCaPubKeyIdentity = identitiesDao.save(caPubKeyIdentity);
 
             /* Insert CA identity (subject key id) */
@@ -121,6 +123,7 @@ public class InitializerBean implements CommandLineRunner {
             byte[] caSubjKeyIdDataTrimmed = Arrays.copyOfRange(caSubjKeyIdData,4,caSubjKeyIdData.length); // we want 2485D6C13EA7CF7F25F4A18AB5D4661EA0282A78
             logger.debug("good length: "+caSubjKeyIdDataTrimmed.length);
             Identities caSubjKeyIdentity = new Identities((byte) 11, caSubjKeyIdDataTrimmed);
+            caSubjKeyIdentity.setCertificate(savedCaCertificates.getId());
             Identities savedCaSubjKeyIdentity = identitiesDao.save(caSubjKeyIdentity);
 
             /* Insert certificate identities for CA cert */
@@ -157,11 +160,13 @@ public class InitializerBean implements CommandLineRunner {
             logger.debug("getName encoded: " + DatatypeConverter.printHexBinary(serverCert.getSubjectX500Principal().getEncoded()));
             logger.debug(DatatypeConverter.printHexBinary(serverCert.getEncoded()));
             Identities serverSubjectIdentity = new Identities((byte) 9, serverCert.getSubjectX500Principal().getEncoded());
+            serverSubjectIdentity.setCertificate(savedServerCertificates.getId());
             Identities savedServerSubjectIdentity = identitiesDao.save(serverSubjectIdentity);
 
             /* Insert Server identity (pub key id) */
             Identities serverPubKeyIdentity = new Identities((byte) 11, new DigestUtils().sha1(serverCert.getPublicKey().getEncoded()));
             logger.debug("serverPubKeyIdentity: "+DatatypeConverter.printHexBinary(new DigestUtils().sha1(serverCert.getPublicKey().getEncoded())));
+            serverPubKeyIdentity.setCertificate(savedServerCertificates.getId());
             Identities savedServerPubKeyIdentity = identitiesDao.save(serverPubKeyIdentity);
             logger.debug("reached");
 
@@ -193,6 +198,7 @@ public class InitializerBean implements CommandLineRunner {
             byte[] subjKeyIdDataTrimmed = Arrays.copyOfRange(subjKeyIdData,4,subjKeyIdData.length);
             System.out.println("good length: "+subjKeyIdDataTrimmed.length);*/
             Identities serverSubjKeyIdentity = new Identities((byte) 11, serverKeyIdentity);
+            serverSubjKeyIdentity.setCertificate(savedServerCertificates.getId());
             Identities savedServerSubjKeyIdentity = identitiesDao.save(serverSubjKeyIdentity);
 
             /* Insert certificate identities for server cert */
