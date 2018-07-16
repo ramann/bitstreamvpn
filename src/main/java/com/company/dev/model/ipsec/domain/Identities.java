@@ -1,6 +1,7 @@
 package com.company.dev.model.ipsec.domain;
 
 import javax.persistence.*;
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 
 @Entity
@@ -47,6 +48,9 @@ public class Identities {
     public void setData(byte[] data) {
         this.data = data;
     }
+
+    @Transient
+    public String getDataHex() { return DatatypeConverter.printHexBinary(getData()); };
 
     @Override
     public boolean equals(Object o) {

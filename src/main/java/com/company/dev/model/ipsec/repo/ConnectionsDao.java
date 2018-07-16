@@ -11,4 +11,5 @@ import java.util.List;
 public interface ConnectionsDao extends CrudRepository<Connections, Long> {
 
     public List<Connections> findByPeerIdAndDisconnected(String peerId, boolean disconnected);
+    public List<Connections> findAll();
 }

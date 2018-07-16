@@ -1,6 +1,7 @@
 package com.company.dev.model.ipsec.domain;
 
 import javax.persistence.*;
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 
 @Entity
@@ -71,6 +72,12 @@ public class Pools {
     public void setTimeout(int timeout) {
         this.timeout = timeout;
     }
+
+    @Transient
+    public String getStartHex() { return DatatypeConverter.printHexBinary(getStart());}
+
+    @Transient
+    public String getEndHex() { return DatatypeConverter.printHexBinary(getEnd());}
 
     @Override
     public boolean equals(Object o) {

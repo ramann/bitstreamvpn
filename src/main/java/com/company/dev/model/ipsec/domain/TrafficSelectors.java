@@ -1,6 +1,7 @@
 package com.company.dev.model.ipsec.domain;
 
 import javax.persistence.*;
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 
 @Entity
@@ -96,6 +97,18 @@ public class TrafficSelectors {
     public void setEndPort(int endPort) {
         this.endPort = endPort;
     }
+
+    @Transient
+    public String getStartAddrHex() {
+        return (getStartAddr() == null) ? "NULL" : DatatypeConverter.printHexBinary(getStartAddr());
+    }
+
+    @Transient
+    public String getEndAddrHex() {
+        return (getEndAddr() == null) ? "NULL" : DatatypeConverter.printHexBinary(getEndAddr());
+    }
+
+
 
     @Override
     public boolean equals(Object o) {

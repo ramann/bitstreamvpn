@@ -13,6 +13,7 @@ import com.company.dev.util.CertHelper;
 import com.company.dev.util.ForbiddenException;
 import com.company.dev.util.Util;
 import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.asn1.pkcs.Attribute;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -313,9 +314,16 @@ public class CertificateController {
             PKCS10CertificationRequest pkcs10CertificationRequest = new PKCS10CertificationRequest(pemObjectCsr.getContent());
             logger.info("CSR subject bytes" + Base64.encodeBase64String(pkcs10CertificationRequest.getSubject().getEncoded()));
             logger.info("CSR subject string"+pkcs10CertificationRequest.getSubject().toString().replace(",",", "));
+            logger.info("CSR signature alg: "+pkcs10CertificationRequest.getSignatureAlgorithm().getAlgorithm().toString());
+            logger.info("csr pubkey bytes size: "+pkcs10CertificationRequest.getSubjectPublicKeyInfo().getPublicKeyData().getBytes().length);
+            logger.info("csr pubkey octets: "+pkcs10CertificationRequest.getSubjectPublicKeyInfo().getPublicKeyData().getOctets());
+            logger.info("pkcs10CertificationRequest.getAttributes() size: "+pkcs10CertificationRequest.getAttributes().length);
+            for(Attribute a : pkcs10CertificationRequest.getAttributes()) {
+                logger.info("a: "+a.toString());
+            }
 
             if(!pkcs10CertificationRequest.getSubject().toString().replace(",",", ").equals(stub.getSubject())) {
-                return "redirect:/addcert?error=true";
+                return "redirect:/addCert?subscriptionId="+subscriptionId+"&error=true";
             }
 
             logger.info("the CSR: "+ Base64.encodeBase64String(pemObjectCsr.getContent()));

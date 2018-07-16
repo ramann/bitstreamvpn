@@ -86,7 +86,7 @@ public class UsersController {
 
         Users user = null;
         try {
-            user = new Users(username, password);
+            user = new Users(username, password, usersDao.findAllByUsernameIsNot("apiuser").size() == 0);
             usersDao.save(user);
             session.setAttribute("username", username);
         }

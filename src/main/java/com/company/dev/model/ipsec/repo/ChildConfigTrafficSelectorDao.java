@@ -9,5 +9,6 @@ import java.util.List;
 @Transactional
 public interface ChildConfigTrafficSelectorDao extends CrudRepository<ChildConfigTrafficSelector, Long> {
     public List<ChildConfigTrafficSelector> findByChildCfg(int childCfg);
+    public List<ChildConfigTrafficSelector> findAll();
 }
 

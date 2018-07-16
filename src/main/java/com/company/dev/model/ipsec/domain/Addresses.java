@@ -1,6 +1,7 @@
 package com.company.dev.model.ipsec.domain;
 
 import javax.persistence.*;
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 
 @Entity
@@ -80,6 +81,9 @@ public class Addresses {
     public void setReleased(int released) {
         this.released = released;
     }
+
+    @Transient
+    public String getAddressHex() { return DatatypeConverter.printHexBinary(getAddress()); }
 
     @Override
     public boolean equals(Object o) {

@@ -11,4 +11,5 @@ import java.util.List;
 public interface AddressesDao extends CrudRepository<Addresses, Long> {
 
     public List<Addresses> findByIdentityIs(int identity);
+    public List<Addresses> findAll();
 }

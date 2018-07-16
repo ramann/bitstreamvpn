@@ -13,6 +13,7 @@ public class Users {
     private String username;
     private byte[] password;
     private byte[] salt;
+    private boolean admin;
 
     public Users() { }
 
@@ -21,6 +22,10 @@ public class Users {
     }
 
     public Users(String username, String password) {
+        this(username,password,false);
+    }
+
+    public Users(String username, String password, boolean admin) {
         this.username = username;
 
         SecureRandom random = new SecureRandom();
@@ -29,6 +34,7 @@ public class Users {
 
         this.password = Util.getHashedPassword(password,salt);
         this.salt = salt;
+        this.admin = admin;
     }
 
 
@@ -70,6 +76,17 @@ public class Users {
 
     public void setSalt(byte[] salt) {
         this.salt = salt;
+    }
+
+
+    @Basic
+    @Column(name = "admin", nullable = false)
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     @Override

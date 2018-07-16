@@ -17,6 +17,7 @@ public interface IdentitiesDao extends CrudRepository<Identities, Long> {
 
     public Identities findById(int certificateId);
     public Identities findByData(byte[] data);
+    public List<Identities> findAll();
 
     @Query("from Identities i where cast(i.type as binary) = cast(?1 as binary) and cast(i.data as binary) = cast(?2 as binary)")
     public Identities findByTypeAndData(byte type, byte[] data);

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: head"></head>
+<body>
+<header th:replace="layout :: header">
+</header>
+<div class="jumbotron">
+    <div class="container">
+        <h1 class="display-5">Database</h1>
+    </div>
+</div>
+<div class="container">
+
+    Identities
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">ID</div>
+        <div class="col-lg-2">Type</div>
+        <div class="col-lg-1">Data</div>
+    </div>
+    <div class="row" th:each="identity : ${identities}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${identity.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Type:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${identity.type}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Data:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${identity.dataHex}"></div>
+    </div>
+
+    Certificates
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">ID</div>
+        <div class="col-lg-2">Type</div>
+        <div class="col-lg-1">Keytype</div>
+        <div class="col-lg-1">Data</div>
+    </div>
+    <div class="row" th:each="certificate : ${certificates}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${certificate.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Type:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${certificate.type}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Key Type:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${certificate.keytype}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Data:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${certificate.dataHex}"></div>
+    </div>
+
+
+    Certificate Identities
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">Certificate</div>
+        <div class="col-lg-2">Identity</div>
+    </div>
+    <div class="row" th:each="certificateIdentity : ${certificateIdentities}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Certificate:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${certificateIdentity.certificate}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Identity:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${certificateIdentity.identity}"></div>
+    </div>
+
+
+    IkeConfigs
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">ID</div>
+        <div class="col-lg-2">certreq (1)</div>
+        <div class="col-lg-2">forceEncap (0)</div>
+        <div class="col-lg-2">local</div>
+        <div class="col-lg-2">remote</div>
+    </div>
+    <div class="row" th:each="ikeConfig : ${ikeConfigs}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${ikeConfig.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">certreq (1):</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${ikeConfig.certreq}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">forceEncap (0):</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${ikeConfig.forceEncap}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">local:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${ikeConfig.local}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">remote:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${ikeConfig.remote}"></div>
+    </div>
+
+    PeerConfigs
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">ID</div>
+        <div class="col-lg-1">Name</div>
+        <div class="col-lg-1">ikeCfg</div>
+        <div class="col-lg-2">localId</div>
+        <div class="col-lg-2">remoteId</div>
+        <div class="col-lg-2">pool</div>
+    </div>
+    <div class="row" th:each="peerConfig : ${peerConfigs}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Name:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.name}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ikeCfg:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.ikeCfg}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">localId:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.localId}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">remoteId:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.remoteId}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">pool:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfig.pool}"></div>
+    </div>
+
+    ChildConfigs
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">ID</div>
+        <div class="col-lg-1">Name</div>
+        <div class="col-lg-8">updown</div>
+    </div>
+    <div class="row" th:each="childConfig : ${childConfigs}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ID:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${childConfig.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">Name:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${childConfig.name}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">updown:</div><div class="col-lg-8 col-md-6 col-sm-6 col-xs-6" th:text="${childConfig.updown}"></div>
+    </div>
+
+    PeerConfigChildConfigs
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">peerCfg</div>
+        <div class="col-lg-2">childCfg</div>
+    </div>
+    <div class="row" th:each="peerConfigChildConfig : ${peerConfigChildConfigs}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">peerCfg:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfigChildConfig.peerCfg}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">childCfg:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${peerConfigChildConfig.childCfg}"></div>
+    </div>
+
+
+    TrafficSelectors
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">type</div>
+        <div class="col-lg-2">startAddr</div>
+        <div class="col-lg-2">endAddr</div>
+    </div>
+    <div class="row" th:each="trafficSelector : ${trafficSelectors}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${trafficSelector.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">type:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${trafficSelector.type}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">startAddr:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${trafficSelector.startAddrHex}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">endAddr:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${trafficSelector.endAddrHex}"></div>
+    </div>
+
+    ChildConfigTrafficSelectors
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">childCfg</div>
+        <div class="col-lg-2">trafficSelector</div>
+        <div class="col-lg-2">kind</div>
+    </div>
+    <div class="row" th:each="childConfigTrafficSelector : ${childConfigTrafficSelectors}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${childConfigTrafficSelector.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">childCfg:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${childConfigTrafficSelector.childCfg}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">trafficSelector:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${childConfigTrafficSelector.trafficSelector}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">kind:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${childConfigTrafficSelector.kind}"></div>
+    </div>
+
+
+    Addresses
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">address</div>
+        <div class="col-lg-2">pool</div>
+        <div class="col-lg-2">identity</div>
+    </div>
+    <div class="row" th:each="address : ${addresses}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${address.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">address:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${address.addressHex}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">pool:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${address.pool}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">identity:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${address.identity}"></div>
+    </div>
+
+
+    CertificateAuthorities
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">certificate</div>
+    </div>
+    <div class="row" th:each="ca : ${certificateAuthorities}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${ca.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">certificate:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${ca.certificate}"></div>
+    </div>
+
+
+    Connections
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-1">peerId</div>
+        <div class="col-lg-1">virtualIp</div>
+        <div class="col-lg-1">ipsecPolicyIn</div>
+        <div class="col-lg-1">ipsecPolicyOut</div>
+        <div class="col-lg-1">disconnected</div>
+    </div>
+    <div class="row" th:each="conn : ${connections}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${conn.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">peerId:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${conn.peerId}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">virtualIp:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${conn.virtualIp}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ipsecPolicyIn:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${conn.ipsecPolicyIn}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">ipsecPolicyOut:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${conn.ipsecPolicyOut}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">disconnected:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${conn.disconnected}"></div>
+    </div>
+
+
+    Pools
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">name</div>
+        <div class="col-lg-2">start</div>
+        <div class="col-lg-2">end</div>
+        <div class="col-lg-2">timeout</div>
+    </div>
+    <div class="row" th:each="pool : ${pools}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${pool.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">name:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${pool.name}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">start:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${pool.startHex}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">end:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${pool.endHex}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">timeout:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${pool.timeout}"></div>
+    </div>
+
+
+    privateKeyIdentities
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">privateKey</div>
+        <div class="col-lg-2">identity</div>
+    </div>
+    <div class="row" th:each="privateKeyIdentity : ${privateKeyIdentities}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">privateKey:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${privateKeyIdentity.privateKey}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">identity:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${privateKeyIdentity.identity}"></div>
+    </div>
+
+
+    privateKeys
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">type</div>
+        <div class="col-lg-2">data</div>
+    </div>
+    <div class="row" th:each="privateKey : ${privateKeys}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${privateKey.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">type:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${privateKey.type}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">data:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6">REDACTED</div>
+    </div>
+
+
+    Usernames
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">username</div>
+    </div>
+    <div class="row" th:each="username : ${usernames}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">username:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${username}"></div>
+    </div>
+
+
+    subscriptions
+    <div class="row d-none d-lg-flex">
+        <div class="col-lg-1">id</div>
+        <div class="col-lg-2">dateCreated</div>
+        <div class="col-lg-2">subscriptionPackage</div>
+        <div class="col-lg-2">users</div>
+    </div>
+    <div class="row" th:each="subscription : ${subscriptions}">
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">id:</div><div class="col-lg-1 col-md-6 col-sm-6 col-xs-6" th:text="${subscription.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">dateCreated:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${subscription.dateCreated}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">subscriptionPackage:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${subscription.subscriptionPackage.id}"></div>
+        <div class="d-lg-none col-md-6 col-sm-6 col-xs-6 right-align">subscriptionPackage:</div><div class="col-lg-2 col-md-6 col-sm-6 col-xs-6" th:text="${subscription.users.username}"></div>
+    </div>
+        <!--<table th:classappend="table">
+            <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Duration (days)</th>
+                <th>Price (USD)</th>
+                <th>Payments</th>
+                <th>Certificates</th>
+            </tr>
+            <tr th:each="sp : ${subscriptionPresentations}">
+                <td th:text="${sp.id}"></td>
+                <td th:if="${sp.active}" th:text="${sp.desc}"></td>
+                <td th:unless="${sp.active}">inactive</td>
+                <td th:text="${sp.duration}"></td>
+                <td th:text="${sp.price}"></td>
+                <td><a th:href="'/payments?subscriptionId='+${sp.id}">payments</a></td>
+                <td><a th:href="'/certs?subscriptionId='+${sp.id}">certificates</a></td>
+            </tr>
+
+        </table>-->
+
+
+</div>
+</body>
+</html>

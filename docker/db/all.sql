@@ -23,12 +23,13 @@ drop table if exists users;
 CREATE TABLE users (
     username varchar(30) NOT NULL primary key,
     password varbinary(256) NOT NULL, -- password varchar(64) NOT NULL,
-    salt varbinary(64) NOT NULL -- salt varchar(16) NOT NULL
+    salt varbinary(64) NOT NULL, -- salt varchar(16) NOT NULL
+    admin boolean DEFAULT FALSE
 );
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES ('apiuser',0x0083E0069FAE0845B3A45AC8ABED8C8C68F05033494B1B4A5226F2562D9E3120,0xBF3CED69DEA1E99D);
+INSERT INTO `users` VALUES ('apiuser',0x0083E0069FAE0845B3A45AC8ABED8C8C68F05033494B1B4A5226F2562D9E3120,0xBF3CED69DEA1E99D, FALSE);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 

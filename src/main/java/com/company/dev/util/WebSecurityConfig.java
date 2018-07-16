@@ -20,8 +20,6 @@ import java.nio.file.Paths;
 @EnableWebSecurity
 public class WebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 
-
-
     //@Override
     @Configuration
     public static class HtmlWebSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -35,6 +33,7 @@ public class WebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
                             "/enterpayment", "/accountcreated", "/instructions", "/signin", "/howitworks", "/about",
                             "/ourcert", "/faq")
                     .permitAll() //.anyRequest().permitAll(); //.and().csrf().disable();
+                    .antMatchers("/showDB").hasAuthority("ADMIN")
                     .anyRequest()
                     .authenticated()
                     .and().formLogin().loginPage("/login").permitAll().and().logout().permitAll();

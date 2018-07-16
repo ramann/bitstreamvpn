@@ -4,6 +4,7 @@ import com.company.dev.model.app.domain.Users;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 
 /**
@@ -24,5 +25,9 @@ public interface UsersDao extends CrudRepository<Users, Long> {
      * @param username the user name.
      */
     public Users findByUsername(String username);
+
+    public List<Users> findAllByUsernameIsNot(String username);
+
+    public List<Users> findAll();
 
 } // class UserDao

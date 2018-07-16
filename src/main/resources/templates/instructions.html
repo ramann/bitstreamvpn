@@ -24,7 +24,8 @@
             <h3>Edit config</h3>
             <div>Edit /etc/ipsec.conf so that it has the below contents:
             <pre>
-charondebug="ike 2, cfg 2"
+config setup
+    charondebug="ike 2, cfg 2"
 
 conn bitstreamvpn
     rightsubnet=0.0.0.0/0
@@ -48,9 +49,16 @@ conn bitstreamvpn
         </div>-->
         <div class="padding-bottom">
             <h3>Create a CSR</h3>
-            <div>We'll give you some commands like
-                <pre>sudo openssl genpkey -algorithm RSA -out /etc/ipsec.d/private/vpn_client_key.pem -pkeyopt rsa_keygen_bits:2048
-sudo openssl req -new -keyform pem -key /etc/ipsec.d/private/vpn_client_key.pem -subj '/C=US/O=test/CN=d2a2419d-e6d0-46f7-9f58-23c2c2f210d8'</pre>. Run these in your terminal and give us the output to receive your certificate.</div>
+            <div>We'll give you some commands like:
+<pre>
+sudo openssl genpkey -algorithm RSA \
+    -out /etc/ipsec.d/private/vpn_client_key.pem \
+    -pkeyopt rsa_keygen_bits:2048
+
+sudo openssl req -new -keyform pem \
+    -key /etc/ipsec.d/private/vpn_client_key.pem \
+    -subj '/C=US/O=test/CN=d2a2419d-e6d0-46f7-9f58-23c2c2f210d8'
+                </pre> Run these in your terminal and give us the output to receive your certificate.</div>
         </div>
         <div class="padding-bottom">
             <h3>Install your certificate</h3>
