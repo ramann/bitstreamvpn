@@ -5,7 +5,7 @@ This is an IKEv2/IPsec VPN service uses that certificate-based authentication.
 Motivation: I wanted to learn Spring Boot and Docker. Also, it is no fun trying to choose a VPN service (https://arstechnica.com/information-technology/2016/06/aiming-for-anonymity-ars-assesses-the-state-of-vpns-in-2016/). I'm not aware of any VPN providers that offer certificate-based authentication for IKEv2/IPsec.
 
 ## Architecture
-There are four Docker containers:
+There are five Docker containers:
 - bitcoin
     - There are shell scripts that are triggered on blocknotify and walletnotify. These make calls to the webapp's updatePayment and updateConfirmations actions.
 - db
@@ -19,6 +19,7 @@ There are four Docker containers:
 - webapp
     - This is a Spring Boot app which serves as the front-end. Thymeleaf is used for templating, and Gradle is used for building. Bootstrap is used for the UI.
     - The webapp has the Subscription and Payment logic, and is also responsible for issuing certificates based on the user's CSR.
+- modsecurity
 
 ## Requirements
 You will need Java, Gradle, and Docker installed.
