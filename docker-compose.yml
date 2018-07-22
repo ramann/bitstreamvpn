@@ -2,29 +2,29 @@ version: '3'
 services:
   db:
     build: docker/db
-    image: "ramann/bitstreamvpn:db"
+    image: "ramann/bitstreamvpn-db"
     environment:
       MYSQL_ROOT_PASSWORD: "my-secret-pw"
   webapp:
     build: .
-    image: "ramann/bitstreamvpn:webapp"
+    image: "ramann/bitstreamvpn"
     command: "java -Xms2048m -Dkeystore.location=server.keystore -Dspring.datasource.url=jdbc:mysql://db:3306/test1 -Dipsec.datasource.url=jdbc:mysql://db:3306/testipsecdb -jar webapp-0.1.0.jar"
     ports:
       - 8080:8080
   bitcoin:
     build: docker/bitcoin
-    image: "ramann/bitstreamvpn:bitcoin"
+    image: "ramann/bitstreamvpn-bitcoin"
     command: "-port=18333 -rpcport=18332 -rpcuser=alice -rpcpassword=alicepass -rpcallowip=172.0.0.0/8 -connect=172.18.0.1:19444 -regtest -server -listen -debug -walletnotify=\"/home/bitcoin/walletnotify.sh %s webapp\" -reindex --blocknotify=\"/home/bitcoin/blocknotify.sh webapp\""
   strongswan:
     build: docker/strongswan
-    image: "ramann/bitstreamvpn:strongswan"
+    image: "ramann/bitstreamvpn-strongswan"
     privileged: true
     ports:
       - 500:500/udp
       - 4500:4500/udp
   modsecurity:
     build: docker/modsecurity
-    image: ramann/bitstreamvpn:modsecurity
+    image: "ramann/bitstreamvpn-modsecurity"
     ports:
       - 80:80
       - 443:443
@@ -35,7 +35,7 @@ services:
       - logs-dir:/var/log/letsencrypt
       - work-dir:/var/lib/letsencrypt
   certbot:
-    image: certbot/certbot
+    image: "certbot/certbot"
     # 'environment' variable didn't seem to work here... let's use DOMAIN_NAME and EMAIL values from shell.
     entrypoint: 'sh -c "ping -c 10 modsecurity && certbot certonly --webroot -d ${DOMAIN_NAME} -m ${EMAIL} --agree-tos --no-eff-email --webroot-path /var/www/html --keep-until-expiring && grep localhost.crt /etc/httpd/conf.d/ssl.conf && cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.old && sed -i \"s#SSLCertificateFile /etc/pki/tls/certs/localhost.crt#SSLCertificateFile /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#SSLCertificateKeyFile /etc/pki/tls/private/localhost.key#SSLCertificateKeyFile /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem#g\" /etc/httpd/conf.d/ssl.conf && grep privkey.pem /etc/httpd/conf.d/ssl.conf && sed -i \"s#\#ServerName www.example.com:443#ServerName ${DOMAIN_NAME}\nProxyPreserveHost On\nProxyPass / http://webapp:8080/\nProxyPassReverse / http://webapp:8080/#g\" /etc/httpd/conf.d/ssl.conf " '
     volumes:
