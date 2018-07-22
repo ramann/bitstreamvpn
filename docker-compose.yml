@@ -37,15 +37,13 @@ services:
   certbot:
     image: certbot/certbot
     # 'environment' variable didn't seem to work here... let's use DOMAIN_NAME and EMAIL values from shell.
-    entrypoint: 'sh -c "cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.old && ping -c 10 modsecurity && certbot certonly --webroot -d ${DOMAIN_NAME} -m ${EMAIL} --agree-tos --no-eff-email --webroot-path /var/www/html --keep-until-expiring &&  sed -i \"s#SSLCertificateFile /etc/pki/tls/certs/localhost.crt#SSLCertificateFile /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#SSLCertificateKeyFile /etc/pki/tls/private/localhost.key#SSLCertificateKeyFile /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#ServerName bitstreamvpn.com#ServerName bitstreamvpn.com\nProxyPreserveHost On\nProxyPass / http://webapp:8080/\nProxyPassReverse / http://webapp:8080/#g\" /etc/httpd/conf.d/ssl.conf " '
+    entrypoint: 'sh -c "ping -c 10 modsecurity && certbot certonly --webroot -d ${DOMAIN_NAME} -m ${EMAIL} --agree-tos --no-eff-email --webroot-path /var/www/html --keep-until-expiring && grep localhost.crt /etc/httpd/conf.d/ssl.conf && cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.old && sed -i \"s#SSLCertificateFile /etc/pki/tls/certs/localhost.crt#SSLCertificateFile /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#SSLCertificateKeyFile /etc/pki/tls/private/localhost.key#SSLCertificateKeyFile /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem#g\" /etc/httpd/conf.d/ssl.conf && grep privkey.pem /etc/httpd/conf.d/ssl.conf && sed -i \"s#\#ServerName www.example.com:443#ServerName ${DOMAIN_NAME}\nProxyPreserveHost On\nProxyPass / http://webapp:8080/\nProxyPassReverse / http://webapp:8080/#g\" /etc/httpd/conf.d/ssl.conf " '
     volumes:
       - web-dir:/var/www
       - server-root:/etc/httpd
       - config-dir:/etc/letsencrypt
       - logs-dir:/var/log/letsencrypt
       - work-dir:/var/lib/letsencrypt
-
-#certbot/certbot certonly --webroot -m robert@makemakeinstall.io --agree-tos --no-eff-email -d bitstreamvpn.com  --webroot-path /var/www/html --keep-until-expiring
 
 volumes:
   web-dir:
