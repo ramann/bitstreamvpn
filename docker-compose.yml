@@ -9,8 +9,8 @@ services:
     build: .
     image: "ramann/bitstreamvpn"
     command: "java -Xms2048m -Dkeystore.location=server.keystore -Dspring.datasource.url=jdbc:mysql://db:3306/test1 -Dipsec.datasource.url=jdbc:mysql://db:3306/testipsecdb -jar webapp-0.1.0.jar"
-    ports:
-      - 8080:8080
+    expose:
+      - "8080"
   bitcoin:
     build: docker/bitcoin
     image: "ramann/bitstreamvpn-bitcoin"
