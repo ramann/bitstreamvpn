@@ -24,8 +24,8 @@ repositories {
     mavenCentral()
 }
 
-sourceCompatibility = 1.9
-targetCompatibility = 1.9
+sourceCompatibility = 1.10
+targetCompatibility = 1.10
 
 dependencies {
  //   compile group: 'org.springframework.boot', name: 'spring-boot-starter-thymeleaf'
