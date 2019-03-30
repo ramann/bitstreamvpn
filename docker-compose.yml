@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: "my-secret-pw"
   webapp:
     build: .
-    image: "ramann/bitstreamvpn"
+    image: "ramann/bitstreamvpn:release-0.0.1"
     command: "java -Xms2048m -Dkeystore.location=server.keystore -Dspring.datasource.url=jdbc:mysql://db:3306/test1 -Dipsec.datasource.url=jdbc:mysql://db:3306/testipsecdb -jar webapp-0.1.0.jar"
     expose:
       - "8080"
@@ -34,16 +34,16 @@ services:
       - config-dir:/etc/letsencrypt
       - logs-dir:/var/log/letsencrypt
       - work-dir:/var/lib/letsencrypt
-  certbot:
-    image: "certbot/certbot"
+        #  certbot:
+        #image: "certbot/certbot"
     # 'environment' variable didn't seem to work here... let's use DOMAIN_NAME and EMAIL values from shell.
-    entrypoint: 'sh -c "ping -c 10 modsecurity && certbot certonly --webroot -d ${DOMAIN_NAME} -m ${EMAIL} --agree-tos --no-eff-email --webroot-path /var/www/html --keep-until-expiring && grep localhost.crt /etc/httpd/conf.d/ssl.conf && cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.old && sed -i \"s#SSLCertificateFile /etc/pki/tls/certs/localhost.crt#SSLCertificateFile /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#SSLCertificateKeyFile /etc/pki/tls/private/localhost.key#SSLCertificateKeyFile /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem#g\" /etc/httpd/conf.d/ssl.conf && grep privkey.pem /etc/httpd/conf.d/ssl.conf && sed -i \"s#\#ServerName www.example.com:443#ServerName ${DOMAIN_NAME}\nProxyPreserveHost On\nProxyPass / http://webapp:8080/\nProxyPassReverse / http://webapp:8080/#g\" /etc/httpd/conf.d/ssl.conf " '
-    volumes:
-      - web-dir:/var/www
-      - server-root:/etc/httpd
-      - config-dir:/etc/letsencrypt
-      - logs-dir:/var/log/letsencrypt
-      - work-dir:/var/lib/letsencrypt
+    #entrypoint: 'sh -c "ping -c 10 modsecurity && certbot certonly --webroot -d ${DOMAIN_NAME} -m ${EMAIL} --agree-tos --no-eff-email --webroot-path /var/www/html --keep-until-expiring && grep localhost.crt /etc/httpd/conf.d/ssl.conf && cp /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.old && sed -i \"s#SSLCertificateFile /etc/pki/tls/certs/localhost.crt#SSLCertificateFile /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem#g\" /etc/httpd/conf.d/ssl.conf && sed -i \"s#SSLCertificateKeyFile /etc/pki/tls/private/localhost.key#SSLCertificateKeyFile /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem#g\" /etc/httpd/conf.d/ssl.conf && grep privkey.pem /etc/httpd/conf.d/ssl.conf && sed -i \"s#\#ServerName www.example.com:443#ServerName ${DOMAIN_NAME}\nProxyPreserveHost On\nProxyPass / http://webapp:8080/\nProxyPassReverse / http://webapp:8080/#g\" /etc/httpd/conf.d/ssl.conf " '
+    #volumes:
+    #  - web-dir:/var/www
+    #  - server-root:/etc/httpd
+    #  - config-dir:/etc/letsencrypt
+    #  - logs-dir:/var/log/letsencrypt
+    #  - work-dir:/var/lib/letsencrypt
 
 volumes:
   web-dir:

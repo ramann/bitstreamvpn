@@ -66,7 +66,7 @@ public class Util {
             ret = inetHost.getHostAddress();
         } catch(UnknownHostException ex) {
             logger.error("Unrecognized host",ex);
-            ret = "104.236.219.189"; //"172.18.0.5"; //TODO: fix this logic
+            ret = "104.248.14.89"; //"172.18.0.5"; //TODO: fix this logic
         }
         return ret;
     }
