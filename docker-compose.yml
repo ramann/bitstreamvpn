@@ -15,13 +15,13 @@ services:
     build: docker/bitcoin
     image: "ramann/bitstreamvpn-bitcoin"
     command: "-port=18333 -rpcport=18332 -rpcuser=alice -rpcpassword=alicepass -rpcallowip=172.0.0.0/8 -connect=172.18.0.1:19444 -regtest -server -listen -debug -walletnotify=\"/home/bitcoin/walletnotify.sh %s webapp\" -reindex --blocknotify=\"/home/bitcoin/blocknotify.sh webapp\""
-  strongswan:
-    build: docker/strongswan
-    image: "ramann/bitstreamvpn-strongswan"
-    privileged: true
-    ports:
-      - 500:500/udp
-      - 4500:4500/udp
+    #  strongswan:
+    #   build: docker/strongswan
+    #   image: "ramann/bitstreamvpn-strongswan"
+    #   privileged: true
+    #   ports:
+    #     - 500:500/udp
+    #     - 4500:4500/udp
   modsecurity:
     build: docker/modsecurity
     image: "ramann/bitstreamvpn-modsecurity"
